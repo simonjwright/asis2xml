@@ -1,0 +1,134 @@
+<!-- $Id: index.html,v 1.1 2004/10/24 06:44:55 simon Exp $ -->
+<html>
+<head>
+<title>ASIS2XML</title>
+</head>
+<body bgcolor="white">
+<h1>ASIS2XML</h1>
+
+<p>ASIS is the Ada Semantic Interface Specification; see
+<a href="http://www.acm.org/sigada/WG/asiswg/">http://www.acm.org/sigada/WG/asiswg/</a>.
+
+<p>This program converts a unit's ASIS representation into XML, so as
+to make it easier to develop transformational tools using (for
+example) XSLT.
+
+<p>As supplied, it relies on GNAT; the only GNAT feature it relies on
+is that Data_Decomposition.Size has been extended to work for Subtype
+Indications; and that only so that it can work out how many bytes a
+record component will occupy when streamed.
+
+<p>Not every ASIS feature is supported yet.
+
+<p>There is no XML Schema as yet. The output's structure is quite
+close to that of ASIS, at least in overall terms; for example,
+an <tt>A_Defining_Name</tt> element in ASIS is represented as a
+&lt;defining_name/&gt; element in XML.
+
+<h2>Copyright</h2>
+
+This work is derived from the Node_Trav component of Display_Source,
+which is distributed as a part of the ASIS implementation for GNAT and
+is Copyright (c) 1995-1999, Free Software Foundation, Inc.
+
+The original work in the program is Copyright (c) Simon Wright
+<simon@pushface.org>.
+
+<h2>Licensing</h2>
+
+The work is distributed under the terms of the <a
+href="http://www.gnu.org/copyleft/gpl.html">GPL</a>.
+
+<h2>Download</h2>
+
+<p><a
+href="http://sourceforge.net/project/showfiles.php?group_id=104293">here</a>
+...
+
+<h2>Prerequisites</h2>
+
+<ul>
+
+<li>GNAT 3.15p or later
+
+<li>The corresponding GNAT ASIS
+
+<li><a href="http://libre.act-europe.fr/xmlada/">XML/Ada</a> 1.0 or
+later
+
+</ul>
+
+<h2>Building</h2>
+
+<p>These instructions are written for Linux and assume you've already
+extracted the distribution into your home directory; the files are at
+<tt>~/asis2xml-yyyymmddl/</tt> (the "l" is used for alpha (a), patch
+(p) or working (t...) releases). The supplied <tt>Makefile</tt> uses
+the GNAT Project file <tt>build.gpr</tt>, which makes assumptions
+about where things are; they should be straightforward to change.
+
+<p>Install ASIS-for-GNAT. I've used
+
+<pre>
+   $ make INSTALL_DIR=$HOME/asis-3.15p
+</pre>
+
+(substitute your GNAT version there).
+
+<p>Make a symbolic link <tt>~/asis</tt> pointing to the directory
+where the ASIS installation has placed the source code (with 3.15p
+it's in <tt>INSTALL_DIR/asis</tt>).
+
+<p>Unpack XML/Ada.
+
+<p>Make a symbolic link <tt>~/xmlada</tt> pointing to the XML/Ada
+installation directory.
+
+<p>Go to the <tt>~/asis2xml-yyyymmddl/</tt> directory and just say
+<tt>make</tt>.
+
+<h2>Installation</h2>
+
+<p>Copy the built <tt>asis2xml</tt> to a directory on your path.
+
+<h2>Use</h2>
+
+<p><tt>asis2xml</tt> will accept either a spec file (<tt>.ads</tt>) or
+a tree file (<tt>.adt</tt>). The GNAT ASIS implementation doesn't
+understand Project files, so if you have any sort of complex path
+setup the way to go is to generate the tree file:
+
+<pre>
+   $ gnatmake -Pbuild -c -u -f -gnatct example.ads
+</pre>
+
+creates <tt>example.adt</tt> in your project (<tt>build.gpr</tt>)'s
+Object_Dir -- in the case of <tt>asis2xml</tt>'s <tt>build.gpr</tt>,
+this is <tt>./.build</tt>. You have to have the input file in the
+current directory, because <tt>asis2xml</tt> assumes the parameter
+filename specifies the unit. This will be sorted!
+
+<pre>
+   $ asis2xml example.adt >example.xml
+</pre>
+
+The output is in "packed" XML; to get a more legible view, you can
+use <a href="http://tidy.sourceforge.net/">HTML Tidy</a>:
+
+<pre>
+   $ asis2xml example.adt | tidy -xml -i >example.xml
+</pre>
+
+or variations.
+
+<hr>
+<i>
+<address>
+<a href="mailto:simon@pushface.org">Simon Wright</a>
+</address>
+<script>
+document.write("Last update: ");
+document.write(document.lastModified);
+</script>
+</i></body>
+</html>

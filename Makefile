@@ -41,8 +41,7 @@ INSTALL
 
 SRC = \
 asis2xml.adb \
-xml_support.ad[bs] \
-normalize-xml.py
+xml_support.ad[bs]
 
 BUILDING = \
 Makefile \
