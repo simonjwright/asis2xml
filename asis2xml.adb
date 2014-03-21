@@ -51,12 +51,11 @@ procedure ASIS2XML is
                   Ada.Command_Line.Command_Name
                   & " [flags] directory|unit.adt");
       Put_Line (Standard_Error, "flags:");
-      Put_Line (Standard_Error, "-s      report data sizes");
+      Put_Line (Standard_Error, "-h          produce this output");
    end Usage;
 
    --  Some global variables.
    SS_Context : Asis.Context;
-   Report_Data_Sizes : Boolean := False;
 
    XI : XML_Support.Info;
    Impl : DOM.Core.DOM_Implementation;
@@ -68,9 +67,11 @@ begin
 
    begin
       loop
-         case GNAT.Command_Line.Getopt ("s") is
+         case GNAT.Command_Line.Getopt ("h") is
             when ASCII.NUL => exit;
-            when 's' => Report_Data_Sizes := True;
+            when 'h' =>
+               Usage;
+               return;
             when others => null;
                --  can't actually happen, raises Invalid_Switch
          end case;
@@ -109,9 +110,7 @@ begin
    Asis.Ada_Environments.Open (SS_Context);
 
    Doc  := DOM.Core.Create_Document (Impl);
-   XML_Support.Initialize (XI,
-                           Doc,
-                           Report_Data_Sizes => Report_Data_Sizes);
+   XML_Support.Initialize (XI, Doc);
 
    declare
       Next_Unit : Asis.Compilation_Unit;
