@@ -64,7 +64,7 @@ procedure ASIS2XML is
 
 begin
 
-   Asis.Implementation.Initialize;
+   Asis.Implementation.Initialize ("-asis05");
 
    begin
       loop
@@ -158,7 +158,7 @@ exception
    when E : others =>
       Put_Line (Standard_Error,
                 "exception received : " &
-                 Ada.Exceptions.Exception_Name (E));
+                 Ada.Exceptions.Exception_Message (E));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
 end ASIS2XML;
