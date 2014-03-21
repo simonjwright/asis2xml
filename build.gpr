@@ -16,18 +16,20 @@
 --
 --  $Id$
 
+with "/Users/simon/local/lib/gnat/asis";
+
 project Build is
 
   for Main use ("asis2xml");
   for Exec_Dir use ".";
+
+  Home := external ("HOME");
+
   for Source_Dirs use
     (
      ".",
-     "../asis",
-     "../xmlada/dom",
-     "../xmlada/input_sources",
-     "../xmlada/sax",
-     "../xmlada/unicode"
+     Home & "/xmlada/**",
+     Home & "/bc"
     );
 
   for Object_Dir use ".build";

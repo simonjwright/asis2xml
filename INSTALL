@@ -8,31 +8,6 @@ This program converts a unit's ASIS representation into XML, so as to
 make it easier to develop transformational tools using (for example)
 XSLT.
 
-As supplied, it relies on GNAT; the only GNAT feature it relies on is
-that Data_Decomposition.Size has been extended to work for Subtype
-Indications; and that only so that it can work out how many bytes a
-record component will occupy when streamed.
-
-Not every ASIS feature is supported yet.
-
-There is no XML Schema as yet (however, the output's structure follows
-that of ASIS).
-
-Copyright
----------
-
-This work is derived from the Node_Trav component of Display_Source,
-which is distributed as a part of the ASIS implementation for GNAT and
-is Copyright (c) 1995-1999, Free Software Foundation, Inc.
-
-The original work in the program is Copyright (c) 2004, Simon Wright
-<simon@pushface.org>.
-
-Licensing
----------
-
-The work is distributed under the terms of the GPL.
-
 Prerequisites
 -------------
 
@@ -85,15 +60,12 @@ parameter filename specifies the unit. This will be sorted!
 
   $ asis2xml example.adt >example.xml
 
-The output is in "packed" XML; to get a more legible (though not
-necessarily more useful!) view, you can use the supplied
-normalize-xml.py:
+The output is in "packed" XML; to get a more legible view, you can
+use HTML Tidy from http://tidy.sourceforge.net/:
 
-  $ asis2xml example.adt | normalize-xml.py >example.xml
+   $ asis2xml example.adt | tidy -xml -i >example.xml
 
-or variations:
-
-  $ normalize-xml.py <example.xml | more
+or variations.
 
 ===
 Simon Wright, <simon@pushface.org>
