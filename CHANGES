@@ -1,0 +1,32 @@
+ASIS2XML
+========
+
+ASIS is the Ada Semantic Interface Specification; see
+<http://www.acm.org/sigada/WG/asiswg/>.
+
+This program converts a unit's ASIS representation into XML, so as to
+make it easier to develop transformational tools using (for example)
+XSLT.
+
+20100903
+
+    o Compatible with GNAT GPL 2010.
+
+    o Doesn't report these Ada2005 elements:
+      An_Interface_Type_Definition
+      A_Formal_Interface_Type_Definition
+      An_Access_Definition
+      An_Expression_Path
+
+    o Reworked the -s support (component sizes for streaming). NB,
+      this corresponds to the Ada2005 attribute S'Stream_Size.
+
+20091008
+
+    o Removal of an extra '&#10;' after the initial XML processing
+      instruction.
+
+    o Revision of the INSTALL note, Makefile and GPR to be a better
+      match for the current AdaCore Libre package installation scheme
+      (install under ~/local, ADA_PROJECT_PATH set to
+      ~/local/lib/gnat).
