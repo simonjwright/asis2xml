@@ -22,6 +22,8 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Text_IO; use Ada.Text_IO;
+pragma Warnings (Off, Ada.Text_IO);
 
 with Asis.Data_Decomposition;
 with Asis.Declarations;
@@ -82,6 +84,7 @@ package body XML_Support is
       use type DOM.Core.Node;
    begin
 
+--        Put_Line ("Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       case Asis.Elements.Element_Kind (Element) is
 
          when A_Pragma =>                  -- Asis.Elements
@@ -124,7 +127,14 @@ package body XML_Support is
                      To_Tag_Name
                        (Operator_Kinds'Image
                           (Asis.Elements.Operator_Kind (Element))));
-               when others => null;
+               when others =>
+                  Tmp := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Comment
+                       (State.Document,
+                        To_Tag_Name
+                          (Asis.Elements.Defining_Name_Kind (Element)'Img)
+                          & " - unrecognised Defining_Name_Kind"));
             end case;
 
          when A_Declaration =>             -- Asis.Declarations
@@ -162,9 +172,17 @@ package body XML_Support is
                      To_Tag_Name
                        (Subprogram_Default_Kinds'Image
                           (Asis.Elements.Default_Kind (Element))));
-               when others => null;
+               when others =>
+                  Tmp := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Comment
+                       (State.Document,
+                        To_Tag_Name
+                          (Asis.Elements.Declaration_Kind (Element)'Img)
+                          & " - unrecognised Declaration_Kind (kind)"));
             end case;
 
+            --  This is an extension of the case above.
             case Asis.Elements.Declaration_Kind (Element) is
                when A_Parameter_Specification |
                  A_Formal_Object_Declaration =>
@@ -176,6 +194,13 @@ package body XML_Support is
                           (Asis.Elements.Mode_Kind (Element))));
                when others =>
                   null;
+--                    Tmp := DOM.Core.Nodes.Append_Child
+--                      (State.Current,
+--                       DOM.Core.Documents.Create_Comment
+--                         (State.Document,
+--                          To_Tag_Name
+--                            (Asis.Elements.Declaration_Kind (Element)'Img)
+--                            & " - unrecognised Declaration_Kind (mode)"));
             end case;
 
          when A_Definition =>              -- Asis.Definitions
@@ -217,7 +242,15 @@ package body XML_Support is
                            To_Tag_Name
                              (Trait_Kinds'Image
                                 (Asis.Elements.Trait_Kind (Element))));
-                     when others => null;
+                     when others =>
+                        Tmp :=
+                          DOM.Core.Nodes.Append_Child
+                          (State.Current,
+                           DOM.Core.Documents.Create_Comment
+                             (State.Document,
+                              To_Tag_Name
+                                (Asis.Elements.Type_Kind (Element)'Img)
+                                & " - unrecognised Type_Kind"));
                   end case;
 
                when A_Constraint =>
@@ -254,7 +287,15 @@ package body XML_Support is
                            To_Tag_Name
                              (Trait_Kinds'Image
                                 (Asis.Elements.Trait_Kind (Element))));
-                     when others => null;
+                     when others =>
+                        Tmp :=
+                          DOM.Core.Nodes.Append_Child
+                          (State.Current,
+                           DOM.Core.Documents.Create_Comment
+                             (State.Document,
+                              To_Tag_Name
+                                (Asis.Elements.Formal_Type_Kind (Element)'Img)
+                                & " - unrecognised Formal_Type_Kind"));
                   end case;
 
                when A_Discrete_Subtype_Definition |
@@ -277,7 +318,14 @@ package body XML_Support is
                        (Trait_Kinds'Image
                           (Asis.Elements.Trait_Kind (Element))));
 
-               when others => null;
+               when others =>
+                  Tmp := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Comment
+                       (State.Document,
+                        To_Tag_Name
+                          (Asis.Elements.Definition_Kind (Element)'Img)
+                          & " - unrecognised Definition_Kind"));
 
             end case;
 
@@ -314,49 +362,55 @@ package body XML_Support is
                   (Expression_Kinds'Image
                      (Asis.Elements.Expression_Kind (Element)))));
            case Asis.Elements.Expression_Kind (Element) is
-               when An_Attribute_Reference =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        To_Tag_Name
-                          (Attribute_Kinds'Image
-                             (Asis.Elements.Attribute_Kind (Element)))));
-               when An_Identifier |
-                 An_Operator_Symbol |
-                 A_Character_Literal |
-                 An_Enumeration_Literal =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        +Asis.Expressions.Name_Image (Element)));
-               when An_Integer_Literal |
-                 A_Real_Literal |
-                 A_String_Literal =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        +Asis.Expressions.Value_Image (Element)));
-               when A_Function_Call =>
-                  if Asis.Expressions.Is_Prefix_Call (Element) then
-                     DOM.Core.Elements.Set_Attribute
-                       (State.Current,
-                        "prefixed",
-                        "true");
-                  else
-                     DOM.Core.Elements.Set_Attribute
-                       (State.Current,
-                        "prefixed",
-                        "false");
-                  end if;
+              when An_Attribute_Reference =>
+                 Tmp :=
+                   DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Text_Node
+                      (State.Document,
+                       To_Tag_Name
+                         (Attribute_Kinds'Image
+                            (Asis.Elements.Attribute_Kind (Element)))));
+              when An_Identifier |
+                An_Operator_Symbol |
+                A_Character_Literal |
+                An_Enumeration_Literal =>
+                 Tmp :=
+                   DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Text_Node
+                      (State.Document,
+                       +Asis.Expressions.Name_Image (Element)));
+              when An_Integer_Literal |
+                A_Real_Literal |
+                A_String_Literal =>
+                 Tmp :=
+                   DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Text_Node
+                      (State.Document,
+                       +Asis.Expressions.Value_Image (Element)));
+              when A_Function_Call =>
+                 if Asis.Expressions.Is_Prefix_Call (Element) then
+                    DOM.Core.Elements.Set_Attribute
+                      (State.Current,
+                       "prefixed",
+                       "true");
+                 else
+                    DOM.Core.Elements.Set_Attribute
+                      (State.Current,
+                       "prefixed",
+                       "false");
+                 end if;
               when others =>
-                 null;
-            end case;
+                 Tmp := DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Comment
+                      (State.Document,
+                       To_Tag_Name
+                         (Asis.Elements.Expression_Kind (Element)'Img)
+                         & " - unrecognised Expression_Kind"));
+           end case;
 
          when An_Association =>            -- Asis.Expressions
             State.Current :=
@@ -407,19 +461,32 @@ package body XML_Support is
                           (Asis.Elements.Representation_Clause_Kind
                              (Element))));
                when others =>
-                  null;
+                  Tmp := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Comment
+                       (State.Document,
+                        To_Tag_Name
+                          (Asis.Elements.Clause_Kind (Element)'Img)
+                          & " - unrecognised Clause_Kind"));
             end case;
 
          when others =>
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Element_Kinds'Image
-                     (Asis.Elements.Element_Kind (Element)))));
-
+              DOM.Core.Nodes.Append_Child
+              (State.Current,
+               DOM.Core.Documents.Create_Element
+                 (State.Document,
+                  To_Tag_Name
+                    (Element_Kinds'Image
+                       (Asis.Elements.Element_Kind (Element)))));
+            Tmp :=
+              DOM.Core.Nodes.Append_Child
+              (State.Current,
+               DOM.Core.Documents.Create_Comment
+                 (State.Document,
+                  To_Tag_Name
+                    (Asis.Elements.Element_Kind (Element)'Img)
+                    & " - unrecognised Element_Kind"));
 
       end case;
 
@@ -429,6 +496,7 @@ package body XML_Support is
                    Control : in out Asis.Traverse_Control;
                    State : in out Info) is
    begin
+--        Put_Line ("Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
    end Post;
 

@@ -119,9 +119,19 @@ begin
         (+Unit_Name, SS_Context);
 
       if (Asis.Compilation_Units.Is_Nil (The_Unit)) then
-         Put_Line ("Unit " & File_Name & " is Nil...");
-         Asis.Ada_Environments.Close (SS_Context);
-         raise Asis.Exceptions.ASIS_Inappropriate_Compilation_Unit;
+
+         --  Try for a body ..
+
+         The_Unit :=
+           Asis.Compilation_Units.Compilation_Unit_Body
+           (+Unit_Name, SS_Context);
+
+         if (Asis.Compilation_Units.Is_Nil (The_Unit)) then
+            Put_Line ("Unit " & File_Name & " is Nil...");
+            Asis.Ada_Environments.Close (SS_Context);
+            raise Asis.Exceptions.ASIS_Inappropriate_Compilation_Unit;
+         end if;
+
       end if;
 
    end;
@@ -143,7 +153,9 @@ begin
    Asis.Ada_Environments.Dissociate (SS_Context);
    Asis.Implementation.Finalize ("");
 
-   DOM.Core.Nodes.Print (Doc);
+   DOM.Core.Nodes.Print (Doc,
+                         Print_Comments => True,
+                         Print_XML_PI => True);
 
    --  delete any generated files
    declare
