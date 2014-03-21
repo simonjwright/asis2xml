@@ -60,6 +60,45 @@ package body XML_Support is
       end if;
    end To_Tag_Name;
 
+   --  Traits (see Asis spec) are an additional classification
+   --  mechanism that lets Asis use fewer high-level elements. Not
+   --  every A_Definition element supports traits, and not every trait
+   --  is applicable in all circumstances. This code assumes that the
+   --  Asis tree is well-formed, so if a trait is present it is legal
+   --  and we just add the corresponding attribute to the DOM tree.
+   procedure Add_Trait (K : Asis.Trait_Kinds; To : DOM.Core.Node);
+   procedure Add_Trait (K : Asis.Trait_Kinds; To : DOM.Core.Node) is
+   begin
+      case K is
+         when Asis.Not_A_Trait | Asis.An_Ordinary_Trait => null;
+         when Asis.An_Aliased_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "aliased", "true");
+         when Asis.An_Access_Definition_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "access", "true");
+         when Asis.A_Reverse_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "reverse", "true");
+         when Asis.A_Private_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "private", "true");
+         when Asis.A_Limited_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "limited", "true");
+         when Asis.A_Limited_Private_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "limited", "true");
+            DOM.Core.Elements.Set_Attribute (To, "private", "true");
+         when Asis.An_Abstract_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "abstract", "true");
+         when Asis.An_Abstract_Private_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "abstract", "true");
+            DOM.Core.Elements.Set_Attribute (To, "private", "true");
+         when Asis.An_Abstract_Limited_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "abstract", "true");
+            DOM.Core.Elements.Set_Attribute (To, "limited", "true");
+         when Asis.An_Abstract_Limited_Private_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "abstract", "true");
+            DOM.Core.Elements.Set_Attribute (To, "limited", "true");
+            DOM.Core.Elements.Set_Attribute (To, "private", "true");
+     end case;
+   end Add_Trait;
+
    procedure Initialize (XI : in out Info;
                          Root : Asis.Element;
                          Document : DOM.Core.Node) is
@@ -142,77 +181,33 @@ package body XML_Support is
 
             case Asis.Elements.Declaration_Kind (Element) is
                when A_Private_Type_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when A_Limited_Private_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "limited", "true");
-                     when An_Abstract_Private_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "abstract", "true");
-                     when An_Abstract_Limited_Private_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "limited", "true");
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "abstract", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Private_Extension_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Abstract_Private_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "abstract", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Variable_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Aliased_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "aliased", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Constant_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Aliased_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "aliased", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Deferred_Constant_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Aliased_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "aliased", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Discriminant_Specification =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Access_Definition_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "access", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Loop_Parameter_Specification =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when A_Reverse_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "reverse", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Procedure_Declaration |
                  A_Function_Declaration =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Abstract_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "abstract", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                when A_Parameter_Specification =>
-                  case Asis.Elements.Trait_Kind (Element) is
-                     when An_Access_Definition_Trait =>
-                        DOM.Core.Elements.Set_Attribute
-                          (State.Current, "abstract", "true");
-                     when others => null;
-                  end case;
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
                   case Asis.Elements.Mode_Kind (Element) is
                      when An_In_Mode =>
                         DOM.Core.Elements.Set_Attribute
@@ -283,16 +278,11 @@ package body XML_Support is
                              (Access_Type_Kinds'Image
                                 (Asis.Elements.Access_Type_Kind (Element))));
                     when A_Derived_Type_Definition |
-                       A_Derived_Record_Extension_Definition |
-                       A_Record_Type_Definition |
+                      A_Derived_Record_Extension_Definition |
+                      A_Record_Type_Definition |
                       A_Tagged_Record_Type_Definition =>
-                       --  XXX needs more care here
-                        DOM.Core.Elements.Set_Attribute
-                          (Tmp,
-                           "kind",
-                           To_Tag_Name
-                             (Trait_Kinds'Image
-                                (Asis.Elements.Trait_Kind (Element))));
+                       Add_Trait (Asis.Elements.Trait_Kind (Element),
+                                  State.Current);
                      when A_Root_Type_Definition =>
                         DOM.Core.Elements.Set_Attribute
                           (Tmp,
@@ -331,13 +321,8 @@ package body XML_Support is
                      when A_Formal_Private_Type_Definition |
                        A_Formal_Tagged_Private_Type_Definition |
                        A_Formal_Derived_Type_Definition =>
-                        --  XXX more care needed here
-                        DOM.Core.Elements.Set_Attribute
-                          (Tmp,
-                           "kind",
-                           To_Tag_Name
-                             (Trait_Kinds'Image
-                                (Asis.Elements.Trait_Kind (Element))));
+                        Add_Trait (Asis.Elements.Trait_Kind (Element),
+                                   State.Current);
                      when others => null;
                   end case;
 
@@ -354,13 +339,8 @@ package body XML_Support is
                  A_Private_Type_Definition |
                  A_Tagged_Private_Type_Definition |
                  A_Private_Extension_Definition =>
-                  --  XXX more work needed here
-                  DOM.Core.Elements.Set_Attribute
-                    (State.Current,
-                     "kind",
-                     To_Tag_Name
-                       (Trait_Kinds'Image
-                          (Asis.Elements.Trait_Kind (Element))));
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
 
                when others => null;
 
