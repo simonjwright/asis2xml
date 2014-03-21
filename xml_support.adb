@@ -14,7 +14,7 @@
 
 --  Part of ASIS2XML.
 --
---  $Id: xml_support.adb,v 1.1 2004/10/17 17:56:07 simon Exp $
+--  $Id$
 --
 --  Developed from the Node_Trav component of Display_Source, which is
 --  distributed as a part of the ASIS implementation for GNAT and is

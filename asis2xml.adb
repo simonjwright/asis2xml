@@ -14,7 +14,7 @@
 
 --  Part of ASIS2XML.
 --
---  $Id: asis2xml.adb,v 1.2 2004/10/28 20:12:58 simon Exp $
+--  $Id$
 --
 --  Developed from Display_Source, which is distributed as a part of
 --  the ASIS implementation for GNAT and is Copyright (c) 1995-1999,

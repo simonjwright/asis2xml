@@ -14,7 +14,7 @@
 
 --  GNAT Project file for ASIS2XML.
 --
---  $Id: build.gpr,v 1.1 2004/10/17 17:54:34 simon Exp $
+--  $Id$
 
 project Build is
 
