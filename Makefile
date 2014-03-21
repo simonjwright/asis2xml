@@ -12,13 +12,10 @@ clean::
 #
 # Expects asis.gpr and xmlada.gpr to be on ADA_PROJECT_PATH.
 
-all:: .build asis2xml
+all:: asis2xml
 
 asis2xml: force
-	gnatmake -Pasis2xml
-
-.build:
-	mkdir .build
+	gnatmake -p -Pasis2xml
 
 .PHONY: force
 
