@@ -100,16 +100,28 @@ package body XML_Support is
      end case;
    end Add_Trait;
 
-   procedure Add_Unit_Name (E : Asis.Element; To : DOM.Core.Node);
-   procedure Add_Unit_Name (E : Asis.Element; To : DOM.Core.Node) is
+   --  Add a 'unit' attribute containing E's unit name, if the
+   --  declaration E is in fact a unit.
+   --
+   --  Could probably arrange to call this only when if could succeed.
+   procedure Add_Unit_Info (E : Asis.Element; To : DOM.Core.Node);
+   procedure Add_Unit_Info (E : Asis.Element; To : DOM.Core.Node) is
       Unit : constant Asis.Compilation_Unit
         := Asis.Elements.Enclosing_Compilation_Unit (E);
+      Unit_Decl : constant Asis.Declaration
+        := Asis.Elements.Unit_Declaration (Unit);
    begin
-      DOM.Core.Elements.Set_Attribute
-        (To,
-         "unit",
-         +Asis.Compilation_Units.Unit_Full_Name (Unit));
-   end Add_Unit_Name;
+      if Asis.Elements.Is_Equal (E, Unit_Decl) then
+         DOM.Core.Elements.Set_Attribute
+           (To,
+            "unit",
+            +Asis.Compilation_Units.Unit_Full_Name (Unit));
+         DOM.Core.Elements.Set_Attribute
+           (To,
+            "file",
+            +Asis.Compilation_Units.Text_Name (Unit));
+      end if;
+   end Add_Unit_Info;
 
    procedure Initialize (XI : in out Info;
                          Root : Asis.Element;
@@ -191,7 +203,7 @@ package body XML_Support is
                   (Declaration_Kinds'Image
                      (Asis.Elements.Declaration_Kind (Element)))));
 
-            Add_Unit_Name (Element, State.Current);
+            Add_Unit_Info (Element, State.Current);
 
             --  Trait handling
             case Asis.Elements.Declaration_Kind (Element) is
