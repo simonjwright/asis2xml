@@ -80,7 +80,7 @@ case of asis2xml's asis2xml.gpr, this is ./.build.
 The output is in "packed" XML; to get a more legible view, you can
 use HTML Tidy from http://tidy.sourceforge.net/:
 
-  $ asis2xml .build/example.adt | tidy -xml -i >example.tidy.xml
+  $ asis2xml .build/example.adt | tidy -xml -i -utf8 >example.tidy.xml
 
 or variations.
 

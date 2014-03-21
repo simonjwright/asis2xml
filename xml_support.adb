@@ -222,7 +222,7 @@ package body XML_Support is
       use type DOM.Core.Node;
    begin
 
---        Put_Line ("Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
+      --  Put_Line ("Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       case Asis.Elements.Element_Kind (Element) is
 
          when A_Pragma =>                  -- Asis.Elements
@@ -336,6 +336,7 @@ package body XML_Support is
                when A_Formal_Procedure_Declaration |
                  A_Formal_Function_Declaration =>
                   --  Should be Subprogram_Default_Kind
+                  --  XXX what sense of 'should'?
                   case Asis.Elements.Default_Kind (Element) is
                      when A_Name_Default =>
                         DOM.Core.Elements.Set_Attribute
@@ -343,6 +344,9 @@ package body XML_Support is
                      when A_Box_Default =>
                         DOM.Core.Elements.Set_Attribute
                           (State.Current, "default", "box");
+                     when A_Null_Default =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "default", "null"); -- 2005
                      when others => null;
                   end case;
                when others => null;
@@ -377,6 +381,12 @@ package body XML_Support is
                            To_Tag_Name
                              (Access_Type_Kinds'Image
                                 (Asis.Elements.Access_Type_Kind (Element))));
+                        --  It seems more reasonable to add the
+                        --  'not_null' attribute to the
+                        --  <access_type_definition/> element than to
+                        --  the enclosing <type_definition/>.
+                        Add_Trait (Asis.Elements.Trait_Kind (Element),
+                                   Tmp);
                      when A_Derived_Type_Definition |
                        A_Derived_Record_Extension_Definition |
                        A_Record_Type_Definition |
@@ -391,7 +401,13 @@ package body XML_Support is
                              (Root_Type_Kinds'Image
                                 (Asis.Elements.Root_Type_Kind (Element))));
                      when An_Interface_Type_Definition =>
-                        null;      -- 2005: Interface_Kinds
+                        --  2005: Interface_Kinds
+                        DOM.Core.Elements.Set_Attribute
+                          (Tmp,
+                           "kind",
+                           To_Tag_Name
+                             (Interface_Kinds'Image
+                                (Asis.Elements.Interface_Kind (Element))));
                      when others => null;
                   end case;
 
@@ -426,7 +442,13 @@ package body XML_Support is
                         Add_Trait (Asis.Elements.Trait_Kind (Element),
                                    State.Current);
                      when A_Formal_Interface_Type_Definition =>
-                        null;       -- 2005: Interface_Kinds
+                        --  2005: Interface_Kinds
+                        DOM.Core.Elements.Set_Attribute
+                          (Tmp,
+                           "kind",
+                           To_Tag_Name
+                             (Interface_Kinds'Image
+                                (Asis.Elements.Interface_Kind (Element))));
                      when others => null;
                   end case;
 
@@ -447,7 +469,13 @@ package body XML_Support is
                              State.Current);
 
                when An_Access_Definition =>
-                  null;          -- 2005: Access_Definition_Kinds
+                  --  2005: Access_Definition_Kinds
+                  DOM.Core.Elements.Set_Attribute
+                    (State.Current,
+                     "kind",
+                     To_Tag_Name
+                       (Access_Definition_Kinds'Image
+                          (Asis.Elements.Access_Definition_Kind (Element))));
 
                when others => null;
 
@@ -478,9 +506,10 @@ package body XML_Support is
                exception
                   when Asis.Exceptions.ASIS_Inappropriate_Element =>
                      null;
---                   Put_Line (Standard_Error,
---                             "getting size: "
---                               & Ada.Exceptions.Exception_Information (E));
+                     --  Put_Line
+                     --    (Standard_Error,
+                     --     "getting size: "
+                     --       & Ada.Exceptions.Exception_Information (E));
                end;
             end if;
 
@@ -597,10 +626,10 @@ package body XML_Support is
              DOM.Core.Documents.Create_Element
                (State.Document, "exception_handler"));
 
-         --  --|A2015 start
-         when An_Expression_Path =>        -- Asis.Expressions
-            null;
-         --  --|A2015 end
+         --  --  --|A2015 start
+         --  when An_Expression_Path =>        -- Asis.Expressions
+         --     null;
+         --  --  --|A2015 end
 
          when Not_An_Element =>
             null;
@@ -616,7 +645,7 @@ package body XML_Support is
       pragma Unreferenced (Element);
       pragma Unreferenced (Control);
    begin
---        Put_Line ("Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
+      --  Put_Line ("Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
    end Post;
 
