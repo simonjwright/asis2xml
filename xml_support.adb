@@ -1,4 +1,4 @@
---  Copyright 2004-2007 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2010 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -27,9 +27,9 @@ pragma Warnings (Off, Ada.Text_IO);
 
 with Asis.Compilation_Units;
 with Asis.Data_Decomposition;
-pragma Warnings (Off, Asis.Data_Decomposition);
 with Asis.Declarations;
 with Asis.Elements;
+with Asis.Exceptions;
 with Asis.Expressions;
 with Asis.Iterator;
 
@@ -454,8 +454,10 @@ package body XML_Support is
             end case;
 
             --  Special support for record component size.
-            if Asis.Elements.Definition_Kind (Element)
-              = A_Subtype_Indication then
+            if State.Report_Data_Sizes
+              and then Asis.Elements.Definition_Kind (Element)
+              = A_Subtype_Indication
+            then
                declare
                   N : DOM.Core.Node := State.Current;
                begin
@@ -464,7 +466,7 @@ package body XML_Support is
                     /= "component_definition" loop
                      N := DOM.Core.Nodes.Parent_Node (N);
                   end loop;
-                  if State.Report_Data_Sizes and then N /= null then
+                  if N /= null then
                      DOM.Core.Elements.Set_Attribute
                        (N,
                         "size",
@@ -473,6 +475,12 @@ package body XML_Support is
                              (Asis.Data_Decomposition.Size (Element)),
                            Ada.Strings.Both));
                   end if;
+               exception
+                  when Asis.Exceptions.ASIS_Inappropriate_Element =>
+                     null;
+--                   Put_Line (Standard_Error,
+--                             "getting size: "
+--                               & Ada.Exceptions.Exception_Information (E));
                end;
             end if;
 
@@ -588,6 +596,11 @@ package body XML_Support is
             (State.Current,
              DOM.Core.Documents.Create_Element
                (State.Document, "exception_handler"));
+
+         --  --|A2015 start
+         when An_Expression_Path =>        -- Asis.Expressions
+            null;
+         --  --|A2015 end
 
          when Not_An_Element =>
             null;

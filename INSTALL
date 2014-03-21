@@ -23,9 +23,10 @@ ASIS2XML's home page is at
 Prerequisites
 -------------
 
-GNAT 3.15p or later (tested with GNAT GPL 2009)
+GNAT 3.15p or later (tested with GNAT GPL 2010)
 The corresponding GNAT ASIS
-XML/Ada 1.0 or later (tested with version 3.2 (SVN revision 147672))
+XML/Ada 1.0 or later (tested with version 4.0 (SVN revision 164272)
+from http://svn.eu.adacore.com/anonsvn/Dev/trunk/xmlada)
 
 Building
 --------
@@ -38,7 +39,7 @@ GPR handling will require work).
 Install ASIS-for-GNAT. My procedure:
 o  Unpack the distribution and enter the top-level directory.
 o  $ make
-o  $ make install prefix=$HOME/local
+o  $ make all install prefix=$HOME/local
 
 Install XML/Ada. My procedure:
 o  Unpack the distribution (or fetch from the SVN repository at
@@ -79,9 +80,60 @@ case of asis2xml's asis2xml.gpr, this is ./.build.
 The output is in "packed" XML; to get a more legible view, you can
 use HTML Tidy from http://tidy.sourceforge.net/:
 
-   $ asis2xml .build/example.adt | tidy -xml -i >example.tidy.xml
+  $ asis2xml .build/example.adt | tidy -xml -i >example.tidy.xml
 
 or variations.
+
+Options
+-------
+
+asis2xml supports one flag (well, two if you count -h for help):
+
+  -s reports the stream size (in bits) required by record components.
+
+For example,
+
+  type C is range 0 .. 255;
+  type R is record
+     Ch : Character;
+     Cc : C;
+     Lf : Long_Float;
+  end record;
+
+results in
+
+  <ordinary_type_declaration>
+    <defining_identifier>R</defining_identifier>
+    <type_definition>
+      <record_type_definition></record_type_definition>
+      <record_definition>
+        <component_declaration>
+          <defining_identifier>Ch</defining_identifier>
+          <component_definition size="8">
+            <subtype_indication>
+              <identifier>Character</identifier>
+            </subtype_indication>
+          </component_definition>
+        </component_declaration>
+        <component_declaration>
+          <defining_identifier>Cc</defining_identifier>
+          <component_definition size="16">
+            <subtype_indication>
+              <identifier>C</identifier>
+            </subtype_indication>
+          </component_definition>
+        </component_declaration>
+        <component_declaration>
+          <defining_identifier>Lf</defining_identifier>
+          <component_definition size="64">
+            <subtype_indication>
+              <identifier>Long_Float</identifier>
+            </subtype_indication>
+          </component_definition>
+        </component_declaration>
+      </record_definition>
+    </type_definition>
+  </ordinary_type_declaration>
 
 ===
 Simon Wright, <simon@pushface.org>
