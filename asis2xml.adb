@@ -24,6 +24,7 @@ with Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.Command_Line;
 with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
@@ -42,23 +43,20 @@ procedure ASIS2XML is
    function "+" (Item : String) return Wide_String
      renames Ada.Characters.Handling.To_Wide_String;
 
-   procedure Usage (Success : Boolean);
-   procedure Usage (Success : Boolean) is
-      Exit_Status : constant array (Boolean) of Ada.Command_Line.Exit_Status
-        := (False => Ada.Command_Line.Failure,
-            True => Ada.Command_Line.Success);
+   procedure Usage;
+   procedure Usage is
    begin
-      Ada.Command_Line.Set_Exit_Status (Exit_Status (Success));
       Put_Line (Standard_Error,
                 "usage: " &
                   Ada.Command_Line.Command_Name
-                  & " directory|unit.adt");
+                  & " [flags] directory|unit.adt");
+      Put_Line (Standard_Error, "flags:");
+      Put_Line (Standard_Error, "-s      report data sizes");
    end Usage;
 
    --  Some global variables.
    SS_Context : Asis.Context;
-   The_Declaration : Asis.Declaration;
-   Source_File_Command_Index : constant Positive := 1;
+   Report_Data_Sizes : Boolean := False;
 
    XI : XML_Support.Info;
    Impl : DOM.Core.DOM_Implementation;
@@ -66,18 +64,32 @@ procedure ASIS2XML is
 
 begin
 
-   if Ada.Command_Line.Argument_Count /= 1 then
-      Usage (Success => False);
-      return;
-   end if;
-
    Asis.Implementation.Initialize;
 
-   declare
-      File_Name : constant String
-        := Ada.Command_Line.Argument (Source_File_Command_Index);
    begin
-      if GNAT.OS_Lib.Is_Directory (File_Name) then
+      loop
+         case GNAT.Command_Line.Getopt ("s") is
+            when ASCII.NUL => exit;
+            when 's' => Report_Data_Sizes := True;
+            when others => null;
+               --  can't actually happen, raises Invalid_Switch
+         end case;
+      end loop;
+   exception
+      when GNAT.Command_Line.Invalid_Switch =>
+         Usage;
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+         return;
+   end;
+
+   declare
+      File_Name : constant String := GNAT.Command_Line.Get_Argument;
+   begin
+      if File_Name'Length = 0 then
+         Usage;
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+         return;
+      elsif GNAT.OS_Lib.Is_Directory (File_Name) then
          Asis.Ada_Environments.Associate
            (The_Context => SS_Context,
             Name => "SS_Context",
@@ -88,7 +100,8 @@ begin
             Name => "SS_Context",
             Parameters  => "-SN -C1 " & (+File_Name));
       else
-         Usage (Success => False);
+         Usage;
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
    end;
@@ -97,8 +110,8 @@ begin
 
    Doc  := DOM.Core.Create_Document (Impl);
    XML_Support.Initialize (XI,
-                           The_Declaration,
-                           Doc);
+                           Doc,
+                           Report_Data_Sizes => Report_Data_Sizes);
 
    declare
       Next_Unit : Asis.Compilation_Unit;
@@ -128,23 +141,23 @@ begin
 exception
 
    when Asis.Exceptions.ASIS_Inappropriate_Compilation_Unit =>
-      Put_Line ("The file "
-                  & Ada.Command_Line.Argument (Source_File_Command_Index) &
-                  " does not contain any Ada Unit.");
-      Usage (Success => False);
+      Put_Line (Standard_Error,
+                "The input does not contain any Ada UNIT.");
+      Usage;
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Asis.Exceptions.ASIS_Failed |
         Asis.Exceptions.ASIS_Inappropriate_Element |
         Asis.Exceptions.ASIS_Inappropriate_Context =>
-         Put_Line (Ada.Characters.Handling.To_String
-                     (Asis.Implementation.Diagnosis));
-      Usage (Success => False);
+      Put_Line (Standard_Error,
+                Ada.Characters.Handling.To_String
+                  (Asis.Implementation.Diagnosis));
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when E : others =>
-      Put_Line ("exception received : " &
+      Put_Line (Standard_Error,
+                "exception received : " &
                  Ada.Exceptions.Exception_Name (E));
-      Put_Line (Ada.Characters.Handling.To_String
-                  (Asis.Implementation.Diagnosis));
-      Usage (Success => False);
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
 end ASIS2XML;

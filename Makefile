@@ -11,11 +11,16 @@ clean::
 
 #######
 # Build
+#
+# Expects ~/asis to be a symbolic link to the directory above the ASIS
+# installation directory (eg, ~/local/lib/gnat), and ~/xmlada to be a
+# link to the XML/Ada installation directory (eg,
+# /usr/local/lib/xmlada-1.0).
 
 all:: .build asis2xml
 
 asis2xml: force
-	ADA_PROJECT_PATH=~/local/lib/gnat gnatmake -Pasis2xml
+	ADA_PROJECT_PATH=~/asis gnatmake -Pasis2xml
 
 .build:
 	mkdir .build
@@ -34,9 +39,6 @@ asis2xml: force
 SUBRELEASE = svn
 DATE = $(shell date +%Y%m%d)$(SUBRELEASE)
 
-HTMLDOCS = \
-index.html
-
 DOCS = \
 COPYING \
 INSTALL
@@ -47,7 +49,7 @@ xml_support.ad[bs]
 
 BUILDING = \
 Makefile \
-build.gpr
+asis2xml.gpr
 
 DISTRIBUTION_FILES = \
 asis2xml-$(DATE).tgz \
@@ -68,16 +70,14 @@ asis2xml-$(DATE): $(DOCS) $(SRC) $(BUILDING)
 	cp -pR $(SRC) $@
 	cp -p $(BUILDING) $@
 
-dist:: $(DISTRIBUTION_FILES) $(HTMLDOCS)
-	-@rm -rf dist
-	mkdir -p dist/download
-	cp -p $(HTMLDOCS) dist/
-	cp $(DISTRIBUTION_FILES) dist/download/
+dist:: $(DISTRIBUTION_FILES)
+	touch dist
 
 
 #######
 # Clean
 
 clean::
-	rm -rf .build
 	rm -f asis2xml
+	rm -rf .build
+	rm -f dist
