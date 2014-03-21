@@ -61,8 +61,8 @@ procedure ASIS2XML is
    The_Unit : Asis.Compilation_Unit;
    The_Declaration : Asis.Declaration;
    The_Control : Asis.Traverse_Control := Asis.Continue;
-   Source_File_Command_Index : Positive := 1;
    Source_Is_Tree_File : Boolean := False;
+   Source_File_Command_Index : Positive := 1;
 
    XI : XML_Support.Info;
    Impl : DOM.Core.DOM_Implementation;
@@ -73,7 +73,7 @@ begin
    if Ada.Command_Line.Argument_Count /= 1 then
       Put_Line
         ("usage: " &
-          Ada.Command_Line.Command_Name & " Unit[.ads|.adb]");
+          Ada.Command_Line.Command_Name & " [Directory|Unit[.ads|.adb]]");
       raise Numeric_Error;
    end if;
 
@@ -85,67 +85,57 @@ begin
       Unit_Name : String := File_Name (File_Name'First .. File_Name'Last - 4);
    begin
 
-      if Extension = ".adt" then
-         Source_Is_Tree_File := True;
-      elsif Extension /= ".ads" then
-         Put_Line ("must be a .ads or .adt file.");
-         return;
-      end if;
-
       Asis.Implementation.Initialize;
 
-      if Source_Is_Tree_File then
+      if Extension = ".adt" then
          Asis.Ada_Environments.Associate
            (The_Context => SS_Context,
             Name => "SS_Context",
             Parameters  => "-SN -C1 " & (+File_Name));
-      else
+         Source_Is_Tree_File := True;
+      elsif Extension = ".ads" or Extension = ".adb" then
          Asis.Ada_Environments.Associate
            (The_Context => SS_Context,
             Name => "SS_Context",
             Parameters  => "-FS");
+         Source_Is_Tree_File := False;
+      else
+         Asis.Ada_Environments.Associate
+           (The_Context => SS_Context,
+            Name => "SS_Context",
+            Parameters  => "-SN -CA -FT -T" & (+File_Name));
+         Source_Is_Tree_File := True;
       end if;
 
       Asis.Ada_Environments.Open (SS_Context);
 
-      for C in Unit_Name'Range loop
-         if Unit_Name (C) = '-' then
-            Unit_Name (C) := '.';
-         end if;
-      end loop;
+      Doc  := DOM.Core.Create_Document (Impl);
+      XML_Support.Initialize (XI,
+                              The_Declaration,
+                              Doc);
 
-      The_Unit :=
-        Asis.Compilation_Units.Library_Unit_Declaration
-        (+Unit_Name, SS_Context);
+  Units :
+      declare
+         Next_Unit : Asis.Compilation_Unit;
+         All_Units : constant Asis.Compilation_Unit_List
+           := Asis.Compilation_Units.Compilation_Units (SS_Context);
+      begin
+         for I in All_Units'Range loop
+            Next_Unit := All_Units (I);
+            if Asis.Compilation_Units.Unit_Origin (Next_Unit)
+              = Asis.An_Application_Unit then
 
-      if (Asis.Compilation_Units.Is_Nil (The_Unit)) then
+               The_Declaration := Asis.Elements.Unit_Declaration (Next_Unit);
 
-         --  Try for a body ..
+               The_Control := Asis.Continue;
 
-         The_Unit :=
-           Asis.Compilation_Units.Compilation_Unit_Body
-           (+Unit_Name, SS_Context);
+               Traverse_Tree_For_XML (The_Declaration, The_Control, XI);
 
-         if (Asis.Compilation_Units.Is_Nil (The_Unit)) then
-            Put_Line ("Unit " & File_Name & " is Nil...");
-            Asis.Ada_Environments.Close (SS_Context);
-            raise Asis.Exceptions.ASIS_Inappropriate_Compilation_Unit;
-         end if;
-
-      end if;
+            end if;
+         end loop;
+      end Units;
 
    end;
-
-   The_Declaration := Asis.Elements.Unit_Declaration (The_Unit);
-
-   The_Control := Asis.Continue;
-
-   Doc  := DOM.Core.Create_Document (Impl);
-   XML_Support.Initialize (XI,
-                           The_Declaration,
-                           Doc);
-
-   Traverse_Tree_For_XML (The_Declaration, The_Control, XI);
 
    XML_Support.Finalize (XI);
 

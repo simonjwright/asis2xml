@@ -25,6 +25,7 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
 pragma Warnings (Off, Ada.Text_IO);
 
+with Asis.Compilation_Units;
 with Asis.Data_Decomposition;
 with Asis.Declarations;
 with Asis.Elements;
@@ -98,6 +99,17 @@ package body XML_Support is
             DOM.Core.Elements.Set_Attribute (To, "private", "true");
      end case;
    end Add_Trait;
+
+   procedure Add_Unit_Name (E : Asis.Element; To : DOM.Core.Node);
+   procedure Add_Unit_Name (E : Asis.Element; To : DOM.Core.Node) is
+      Unit : constant Asis.Compilation_Unit
+        := Asis.Elements.Enclosing_Compilation_Unit (E);
+   begin
+      DOM.Core.Elements.Set_Attribute
+        (To,
+         "unit",
+         +Asis.Compilation_Units.Unit_Full_Name (Unit));
+   end Add_Unit_Name;
 
    procedure Initialize (XI : in out Info;
                          Root : Asis.Element;
@@ -179,6 +191,9 @@ package body XML_Support is
                   (Declaration_Kinds'Image
                      (Asis.Elements.Declaration_Kind (Element)))));
 
+            Add_Unit_Name (Element, State.Current);
+
+            --  Trait handling
             case Asis.Elements.Declaration_Kind (Element) is
                when A_Private_Type_Declaration =>
                   Add_Trait (Asis.Elements.Trait_Kind (Element),
@@ -357,15 +372,15 @@ package body XML_Support is
                     /= "component_definition" loop
                      N := DOM.Core.Nodes.Parent_Node (N);
                   end loop;
-                  if N /= null then
-                     DOM.Core.Elements.Set_Attribute
-                       (N,
-                        "size",
-                        Ada.Strings.Fixed.Trim
-                          (Asis.ASIS_Natural'Image
-                             (Asis.Data_Decomposition.Size (Element)),
-                           Ada.Strings.Both));
-                  end if;
+--                    if N /= null then
+--                       DOM.Core.Elements.Set_Attribute
+--                         (N,
+--                          "size",
+--                          Ada.Strings.Fixed.Trim
+--                            (Asis.ASIS_Natural'Image
+--                               (Asis.Data_Decomposition.Size (Element)),
+--                             Ada.Strings.Both));
+--                    end if;
                end;
             end if;
 
