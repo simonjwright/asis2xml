@@ -15,7 +15,7 @@ clean::
 all:: .build asis2xml
 
 asis2xml: force
-	gnatmake -Pbuild
+	ADA_PROJECT_PATH=~/local/lib/gnat gnatmake -Pasis2xml
 
 .build:
 	mkdir .build
@@ -26,10 +26,12 @@ asis2xml: force
 ############################
 # Distribution construction
 
-# Create the current date, in the form yyyymmdd. This certainly works
-# in Linux.
-# You can override the use of today's date by setting DATE on the make
-# command line. This might be useful for a patch release.
+# Create the current date, in the form yyyymmddSSS (SSS is the value
+# of SUBRELEASE, default svn).
+# You can override the use of today's date and subrelease by setting
+# DATE on the make command line. This might be useful for a patch
+# release.
+SUBRELEASE = svn
 DATE = $(shell date +%Y%m%d)$(SUBRELEASE)
 
 HTMLDOCS = \
