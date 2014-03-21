@@ -17,6 +17,7 @@
 --  $Id$
 
 with "asis";
+with "xmlada";
 
 project ASIS2XML is
 
@@ -28,7 +29,6 @@ project ASIS2XML is
   for Source_Dirs use
     (
      ".",
-     Home & "/xmlada/**",
      Home & "/bc"
     );
 

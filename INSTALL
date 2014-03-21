@@ -23,31 +23,37 @@ ASIS2XML's home page is at
 Prerequisites
 -------------
 
-GNAT 3.15p or later
+GNAT 3.15p or later (tested with GNAT GPL 2009)
 The corresponding GNAT ASIS
-XML/Ada 1.0 or later
+XML/Ada 1.0 or later (tested with version 3.2 (SVN revision 147672))
 
 Building
 --------
 
-These instructions are written for Linux and assume you've already
-extracted the distribution into your home directory; the files are at
-~/asis2xml-yyyymmdd/. The supplied Makefile uses the GNAT Project file
-asis2xml.gpr, which makes assumptions about where things are; they
-should be straightforward to change.
+Note, many Libre tools and libraries install in $HOME/local, and the
+ASIS2XML GPR and the support installation instructions below assume
+this. They do assume a recent version of GNAT (in particular, 3.15p's
+GPR handling will require work).
 
-Install ASIS-for-GNAT. I've used "make INSTALL_DIR=$HOME/asis-3.15p"
-(substitute your GNAT version there).
+Install ASIS-for-GNAT. My procedure:
+o  Unpack the distribution and enter the top-level directory.
+o  $ make
+o  $ make install prefix=$HOME/local
 
-Make a symbolic link ~/asis pointing to $INSTALL_DIR. There should now
-be a file ~/asis/asis.gpr and a directory ~/asis/asis/.
+Install XML/Ada. My procedure:
+o  Unpack the distribution (or fetch from the SVN repository at
+   http://svn.eu.adacore.com/anonsvn/Dev/trunk/xmlada). Enter the
+   top-level directory.
+o  $ ./configure --prefix=$HOME/local
+o  $ make
+o  $ make install
 
-Unpack XML/Ada.
-
-Make a symbolic link ~/xmlada pointing to the XML/Ada installation
-directory.
-
-Go to the asis2xml directory and just say "make".
+Build ASIS2XML.
+o  Unpack the distribution (or fetch from the SVN repository at
+   https://gnat-asis.svn.sourceforge.net/svnroot/gnat-asis/trunk/tools/asis2xml).
+   Enter the top-level directory.
+o  $ make
+o  Copy asis2xml[.exe] to somewhere on your path (perhaps $HOME/local/bin).
 
 Installation
 ------------
