@@ -1,4 +1,4 @@
---  Copyright 2004-2006 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2007 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -186,6 +186,8 @@ package body XML_Support is
             DOM.Core.Elements.Set_Attribute (To, "aliased", "true");
          when Asis.An_Access_Definition_Trait =>
             DOM.Core.Elements.Set_Attribute (To, "access", "true");
+         when Asis.A_Null_Exclusion_Trait =>
+            DOM.Core.Elements.Set_Attribute (To, "not_null", "true");
          when Asis.A_Reverse_Trait =>
             DOM.Core.Elements.Set_Attribute (To, "reverse", "true");
          when Asis.A_Private_Trait =>
@@ -388,6 +390,8 @@ package body XML_Support is
                            To_Tag_Name
                              (Root_Type_Kinds'Image
                                 (Asis.Elements.Root_Type_Kind (Element))));
+                     when An_Interface_Type_Definition =>
+                        null;      -- 2005: Interface_Kinds
                      when others => null;
                   end case;
 
@@ -421,6 +425,8 @@ package body XML_Support is
                        A_Formal_Derived_Type_Definition =>
                         Add_Trait (Asis.Elements.Trait_Kind (Element),
                                    State.Current);
+                     when A_Formal_Interface_Type_Definition =>
+                        null;       -- 2005: Interface_Kinds
                      when others => null;
                   end case;
 
@@ -439,6 +445,9 @@ package body XML_Support is
                  A_Private_Extension_Definition =>
                   Add_Trait (Asis.Elements.Trait_Kind (Element),
                              State.Current);
+
+               when An_Access_Definition =>
+                  null;          -- 2005: Access_Definition_Kinds
 
                when others => null;
 
