@@ -1,0 +1,100 @@
+ASIS2XML
+========
+
+ASIS is the Ada Semantic Interface Specification; see
+<http://www.acm.org/sigada/WG/asiswg/>.
+
+This program converts a unit's ASIS representation into XML, so as to
+make it easier to develop transformational tools using (for example)
+XSLT.
+
+As supplied, it relies on GNAT; the only GNAT feature it relies on is
+that Data_Decomposition.Size has been extended to work for Subtype
+Indications; and that only so that it can work out how many bytes a
+record component will occupy when streamed.
+
+Not every ASIS feature is supported yet.
+
+There is no XML Schema as yet (however, the output's structure follows
+that of ASIS).
+
+Copyright
+---------
+
+This work is derived from the Node_Trav component of Display_Source,
+which is distributed as a part of the ASIS implementation for GNAT and
+is Copyright (c) 1995-1999, Free Software Foundation, Inc.
+
+The original work in the program is Copyright (c) 2004, Simon Wright
+<simon@pushface.org>.
+
+Licensing
+---------
+
+The work is distributed under the terms of the GPL.
+
+Prerequisites
+-------------
+
+GNAT 3.15p or later
+The corresponding GNAT ASIS
+XML/Ada 1.0 or later
+
+Building
+--------
+
+These instructions are written for Linux and assume you've already
+extracted the distribution into your home directory; the files are at
+~/asis2xml-yyyymmdd/. The supplied Makefile uses the GNAT Project file
+build.gpr, which makes assumptions about where things are; they should
+be straightforward to change.
+
+Install ASIS-for-GNAT. I've used "make INSTALL_DIR=$HOME/asis-3.15p"
+(substitute your GNAT version there).
+
+Make a symbolic link ~/asis pointing to the directory where the ASIS
+installation has placed the source code (with 3.15p it's in
+INSTALL_DIR/asis).
+
+Unpack XML/Ada.
+
+Make a symbolic link ~/xmlada pointing to the XML/Ada installation
+directory.
+
+Go to the asis2xml directory and just say "make".
+
+Installation
+------------
+
+Copy asis2xml to a directory on your path.
+
+Use
+---
+
+asis2xml will accept either a spec file (.ads) or a tree file
+(.adt). The GNAT ASIS implementation doesn't understand Project files,
+so if you have any sort of complex path setup the way to go is to
+generate the tree file:
+
+  $ gnatmake -Pbuild -c -u -f -gnatct example.ads
+
+creates example.adt in your project (build.gpr)'s Object_Dir -- in the
+case of asis2xml's build.gpr, this is ./.build. You have to have the
+input file in the current directory, because asis2xml assumes the
+parameter filename specifies the unit. This will be sorted!
+
+  $ asis2xml example.adt >example.xml
+
+The output is in "packed" XML; to get a more legible (though not
+necessarily more useful!) view, you can use the supplied
+normalize-xml.py:
+
+  $ asis2xml example.adt | normalize-xml.py >example.xml
+
+or variations:
+
+  $ normalize-xml.py <example.xml | more
+
+===
+Simon Wright, <simon@pushface.org>
+$Id: INSTALL,v 1.1 2004/10/17 11:40:46 simon Exp $
