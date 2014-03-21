@@ -1,4 +1,4 @@
---  Copyright 2004 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2006 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -30,16 +30,11 @@ package XML_Support is
    procedure Initialize (XI : in out Info;
                          Root : Asis.Element;
                          Document : DOM.Core.Node);
+
+   procedure Add_Compilation_Unit (The_Unit : Asis.Compilation_Unit;
+                                   To : in out Info);
+
    procedure Finalize (XI : in out Info);
-
-
-   procedure Pre (Element : in Asis.Element;
-                  Control : in out Asis.Traverse_Control;
-                  State : in out Info);
-
-   procedure Post (Element : in Asis.Element;
-                   Control : in out Asis.Traverse_Control;
-                   State : in out Info);
 
 private
 

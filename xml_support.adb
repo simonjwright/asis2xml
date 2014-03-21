@@ -1,4 +1,4 @@
---  Copyright 2004 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2006 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -21,17 +21,16 @@
 --  Copyright (c) 1995-1999, Free Software Foundation, Inc.
 
 with Ada.Characters.Handling;
-with Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
 pragma Warnings (Off, Ada.Text_IO);
 
 with Asis.Compilation_Units;
 with Asis.Data_Decomposition;
+pragma Warnings (Off, Asis.Data_Decomposition);
 with Asis.Declarations;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
-with Asis.Text;
 
 with DOM.Core.Nodes;
 with DOM.Core.Documents;
@@ -39,27 +38,12 @@ with DOM.Core.Elements;
 
 package body XML_Support is
 
-   function "+" (Item : String) return Wide_String
-     renames Ada.Characters.Handling.To_Wide_String;
+   ------------------------------
+   --  Local subprogram specs  --
+   ------------------------------
 
+   --  Wide_String => String conversion.
    function "+" (Item : Wide_String) return String;
-   function "+" (Item : Wide_String) return String is
-   begin
-      return Ada.Characters.Handling.To_String (Item);
-   end "+";
-
-   function To_Tag_Name (Image : String) return String;
-   function To_Tag_Name (Image : String) return String is
-      Result : String := Ada.Characters.Handling.To_Lower (Image);
-   begin
-      if Result (1 .. 2) = "a_" then
-         return Result (3 .. Result'Last);
-      elsif Result (1 .. 3) = "an_" then
-         return Result (4 .. Result'Last);
-      else
-         return Result;
-      end if;
-   end To_Tag_Name;
 
    --  Traits (see Asis spec) are an additional classification
    --  mechanism that lets Asis use fewer high-level elements. Not
@@ -68,6 +52,135 @@ package body XML_Support is
    --  Asis tree is well-formed, so if a trait is present it is legal
    --  and we just add the corresponding attribute to the DOM tree.
    procedure Add_Trait (K : Asis.Trait_Kinds; To : DOM.Core.Node);
+
+   --  Conversion of Asis enumeration literals, typically A_Thing or
+   --  An_Object, to our canonical form (leading article removed, all
+   --  lower case).
+   function To_Tag_Name (Image : String) return String;
+
+   --  Tree traversal
+   procedure Pre (Element : in Asis.Element;
+                  Control : in out Asis.Traverse_Control;
+                  State : in out Info);
+   procedure Post (Element : in Asis.Element;
+                   Control : in out Asis.Traverse_Control;
+                   State : in out Info);
+   procedure Traverse_Tree_For_XML is new Asis.Iterator.Traverse_Element
+     (XML_Support.Info,
+      XML_Support.Pre,
+      XML_Support.Post);
+
+
+   ---------------------------------------
+   --  Spec subprogram implementations  --
+   ---------------------------------------
+
+   procedure Add_Compilation_Unit (The_Unit : Asis.Compilation_Unit;
+                                   To : in out Info) is
+      The_Control : Asis.Traverse_Control := Asis.Continue;
+      Starting : constant DOM.Core.Node := To.Current;
+      --  Remember the starting node (will be <asis/>)
+      Unit : DOM.Core.Node;
+   begin
+
+      --  Add the <compilation_unit/> element.
+      Unit := DOM.Core.Nodes.Append_Child
+        (Starting,
+         DOM.Core.Documents.Create_Element (To.Document, "compilation_unit"));
+      DOM.Core.Elements.Set_Attribute
+        (Unit,
+         "unit",
+         +Asis.Compilation_Units.Unit_Full_Name (The_Unit));
+      DOM.Core.Elements.Set_Attribute
+        (Unit,
+         "file",
+         +Asis.Compilation_Units.Text_Name (The_Unit));
+
+      --  Add the context clauses (if any).
+      declare
+         Context_Clauses : constant Asis.Context_Clause_List
+           := Asis.Elements.Context_Clause_Elements
+           (Compilation_Unit => The_Unit,
+            Include_Pragmas => True);
+         Context : DOM.Core.Node;
+      begin
+         if Context_Clauses'Length > 0 then
+            Context := DOM.Core.Nodes.Append_Child
+              (Unit,
+               DOM.Core.Documents.Create_Element (To.Document,
+                                                  "context_clauses"));
+            for C in Context_Clauses'Range loop
+               To.Current := Context;
+               Traverse_Tree_For_XML (Context_Clauses (C),
+                                      The_Control,
+                                      To);
+            end loop;
+         end if;
+      end;
+
+      --  Add the declaration.
+      To.Current := DOM.Core.Nodes.Append_Child
+        (Unit,
+         DOM.Core.Documents.Create_Element (To.Document, "unit_declaration"));
+      Traverse_Tree_For_XML (Asis.Elements.Unit_Declaration (The_Unit),
+                             The_Control,
+                             To);
+
+      --  Add the compilation pragmas (if any).
+      declare
+         Compilation_Pragmas : constant Asis.Pragma_Element_List
+           := Asis.Elements.Compilation_Pragmas (The_Unit);
+         Pragmas : DOM.Core.Node;
+      begin
+         if Compilation_Pragmas'Length > 0 then
+            Pragmas := DOM.Core.Nodes.Append_Child
+              (Unit,
+               DOM.Core.Documents.Create_Element (To.Document,
+                                                  "compilation_pragmas"));
+            for C in Compilation_Pragmas'Range loop
+               To.Current := Pragmas;
+               Traverse_Tree_For_XML (Compilation_Pragmas (C),
+                                      The_Control,
+                                      To);
+            end loop;
+         end if;
+      end;
+
+      --  Restore the starting node.
+      To.Current := Starting;
+
+   end Add_Compilation_Unit;
+
+
+   procedure Initialize (XI : in out Info;
+                         Root : Asis.Element;
+                         Document : DOM.Core.Node) is
+   begin
+      XI.Root := Root;
+      XI.Document := Document;
+      XI.Current := DOM.Core.Nodes.Append_Child
+        (XI.Document,
+         DOM.Core.Documents.Create_Element (XI.Document, "asis"));
+   end Initialize;
+
+
+   procedure Finalize (XI : in out Info) is
+      pragma Unreferenced (XI);
+   begin
+      null;
+   end Finalize;
+
+
+   ----------------------------------------
+   --  Local subprogram implementations  --
+   ----------------------------------------
+
+   function "+" (Item : Wide_String) return String is
+   begin
+      return Ada.Characters.Handling.To_String (Item);
+   end "+";
+
+
    procedure Add_Trait (K : Asis.Trait_Kinds; To : DOM.Core.Node) is
    begin
       case K is
@@ -97,51 +210,14 @@ package body XML_Support is
             DOM.Core.Elements.Set_Attribute (To, "abstract", "true");
             DOM.Core.Elements.Set_Attribute (To, "limited", "true");
             DOM.Core.Elements.Set_Attribute (To, "private", "true");
-     end case;
+      end case;
    end Add_Trait;
 
-   --  Add a 'unit' attribute containing E's unit name, if the
-   --  declaration E is in fact a unit.
-   --
-   --  Could probably arrange to call this only when if could succeed.
-   procedure Add_Unit_Info (E : Asis.Element; To : DOM.Core.Node);
-   procedure Add_Unit_Info (E : Asis.Element; To : DOM.Core.Node) is
-      Unit : constant Asis.Compilation_Unit
-        := Asis.Elements.Enclosing_Compilation_Unit (E);
-      Unit_Decl : constant Asis.Declaration
-        := Asis.Elements.Unit_Declaration (Unit);
-   begin
-      if Asis.Elements.Is_Equal (E, Unit_Decl) then
-         DOM.Core.Elements.Set_Attribute
-           (To,
-            "unit",
-            +Asis.Compilation_Units.Unit_Full_Name (Unit));
-         DOM.Core.Elements.Set_Attribute
-           (To,
-            "file",
-            +Asis.Compilation_Units.Text_Name (Unit));
-      end if;
-   end Add_Unit_Info;
-
-   procedure Initialize (XI : in out Info;
-                         Root : Asis.Element;
-                         Document : DOM.Core.Node) is
-   begin
-      XI.Root := Root;
-      XI.Document := Document;
-      XI.Current := DOM.Core.Nodes.Append_Child
-        (XI.Document,
-         DOM.Core.Documents.Create_Element (XI.Document, "asis"));
-   end Initialize;
-
-   procedure Finalize (XI : in out Info) is
-   begin
-      null;
-   end Finalize;
 
    procedure Pre (Element : in Asis.Element;
                   Control : in out Asis.Traverse_Control;
                   State : in out Info) is
+      pragma Unreferenced (Control);
       Tmp : DOM.Core.Node;
       use Asis;
       use type DOM.Core.Node;
@@ -202,8 +278,6 @@ package body XML_Support is
                 To_Tag_Name
                   (Declaration_Kinds'Image
                      (Asis.Elements.Declaration_Kind (Element)))));
-
-            Add_Unit_Info (Element, State.Current);
 
             --  Trait handling
             case Asis.Elements.Declaration_Kind (Element) is
@@ -304,12 +378,12 @@ package body XML_Support is
                            To_Tag_Name
                              (Access_Type_Kinds'Image
                                 (Asis.Elements.Access_Type_Kind (Element))));
-                    when A_Derived_Type_Definition |
-                      A_Derived_Record_Extension_Definition |
-                      A_Record_Type_Definition |
-                      A_Tagged_Record_Type_Definition =>
-                       Add_Trait (Asis.Elements.Trait_Kind (Element),
-                                  State.Current);
+                     when A_Derived_Type_Definition |
+                       A_Derived_Record_Extension_Definition |
+                       A_Record_Type_Definition |
+                       A_Tagged_Record_Type_Definition =>
+                        Add_Trait (Asis.Elements.Trait_Kind (Element),
+                                   State.Current);
                      when A_Root_Type_Definition =>
                         DOM.Core.Elements.Set_Attribute
                           (Tmp,
@@ -374,8 +448,8 @@ package body XML_Support is
             end case;
 
             --  Special support for record component size.
-            if Asis.Elements.Definition_Kind (Element) = A_Subtype_Indication
-            then
+            if Asis.Elements.Definition_Kind (Element)
+              = A_Subtype_Indication then
                declare
                   N : DOM.Core.Node := State.Current;
                begin
@@ -405,49 +479,49 @@ package body XML_Support is
                 To_Tag_Name
                   (Expression_Kinds'Image
                      (Asis.Elements.Expression_Kind (Element)))));
-           case Asis.Elements.Expression_Kind (Element) is
-              when An_Attribute_Reference =>
-                 Tmp :=
-                   DOM.Core.Nodes.Append_Child
-                   (State.Current,
-                    DOM.Core.Documents.Create_Text_Node
-                      (State.Document,
-                       To_Tag_Name
-                         (Attribute_Kinds'Image
-                            (Asis.Elements.Attribute_Kind (Element)))));
-              when An_Identifier |
-                An_Operator_Symbol |
-                A_Character_Literal |
-                An_Enumeration_Literal =>
-                 Tmp :=
-                   DOM.Core.Nodes.Append_Child
-                   (State.Current,
-                    DOM.Core.Documents.Create_Text_Node
-                      (State.Document,
-                       +Asis.Expressions.Name_Image (Element)));
-              when An_Integer_Literal |
-                A_Real_Literal |
-                A_String_Literal =>
-                 Tmp :=
-                   DOM.Core.Nodes.Append_Child
-                   (State.Current,
-                    DOM.Core.Documents.Create_Text_Node
-                      (State.Document,
-                       +Asis.Expressions.Value_Image (Element)));
-              when A_Function_Call =>
-                 if Asis.Expressions.Is_Prefix_Call (Element) then
-                    DOM.Core.Elements.Set_Attribute
-                      (State.Current,
-                       "prefixed",
-                       "true");
-                 else
-                    DOM.Core.Elements.Set_Attribute
-                      (State.Current,
-                       "prefixed",
-                       "false");
-                 end if;
-              when others => null;
-           end case;
+            case Asis.Elements.Expression_Kind (Element) is
+               when An_Attribute_Reference =>
+                  Tmp :=
+                    DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Text_Node
+                       (State.Document,
+                        To_Tag_Name
+                          (Attribute_Kinds'Image
+                             (Asis.Elements.Attribute_Kind (Element)))));
+               when An_Identifier |
+                 An_Operator_Symbol |
+                 A_Character_Literal |
+                 An_Enumeration_Literal =>
+                  Tmp :=
+                    DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Text_Node
+                       (State.Document,
+                        +Asis.Expressions.Name_Image (Element)));
+               when An_Integer_Literal |
+                 A_Real_Literal |
+                 A_String_Literal =>
+                  Tmp :=
+                    DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Text_Node
+                       (State.Document,
+                        +Asis.Expressions.Value_Image (Element)));
+               when A_Function_Call =>
+                  if Asis.Expressions.Is_Prefix_Call (Element) then
+                     DOM.Core.Elements.Set_Attribute
+                       (State.Current,
+                        "prefixed",
+                        "true");
+                  else
+                     DOM.Core.Elements.Set_Attribute
+                       (State.Current,
+                        "prefixed",
+                        "false");
+                  end if;
+               when others => null;
+            end case;
 
          when An_Association =>            -- Asis.Expressions
             State.Current :=
@@ -516,12 +590,29 @@ package body XML_Support is
 
    end Pre;
 
+
    procedure Post (Element : in Asis.Element;
                    Control : in out Asis.Traverse_Control;
                    State : in out Info) is
+      pragma Unreferenced (Element);
+      pragma Unreferenced (Control);
    begin
 --        Put_Line ("Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
    end Post;
+
+
+   function To_Tag_Name (Image : String) return String is
+      Result : constant String := Ada.Characters.Handling.To_Lower (Image);
+   begin
+      if Result (1 .. 2) = "a_" then
+         return Result (3 .. Result'Last);
+      elsif Result (1 .. 3) = "an_" then
+         return Result (4 .. Result'Last);
+      else
+         return Result;
+      end if;
+   end To_Tag_Name;
+
 
 end XML_Support;
