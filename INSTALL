@@ -23,25 +23,24 @@ ASIS2XML's home page is at
 Prerequisites
 -------------
 
-GNAT 3.15p or later (tested with GNAT GPL 2010)
+GNAT 3.15p or later (tested with GNAT GPL 2012)
 The corresponding GNAT ASIS
-XML/Ada 1.0 or later (tested with version 4.0 (SVN revision 164272)
-from http://svn.eu.adacore.com/anonsvn/Dev/trunk/xmlada)
+XML/Ada 1.0 or later
 
 Building
 --------
 
 Note, many Libre tools and libraries install in $HOME/local, and the
 ASIS2XML GPR and the support installation instructions below assume
-this. They do assume a recent version of GNAT (in particular, 3.15p's
-GPR handling will require work).
+this. They do assume a recent version of GNAT.
 
-Install ASIS-for-GNAT. My procedure:
+Install ASIS-for-GNAT if not already installed with your compiler. My
+procedure:
 o  Unpack the distribution and enter the top-level directory.
 o  $ make
 o  $ make all install prefix=$HOME/local
 
-Install XML/Ada. My procedure:
+Install XML/Ada if not already installed with your compiler. My procedure:
 o  Unpack the distribution (or fetch from the SVN repository at
    http://svn.eu.adacore.com/anonsvn/Dev/trunk/xmlada). Enter the
    top-level directory.
@@ -50,16 +49,17 @@ o  $ make
 o  $ make install
 
 Build ASIS2XML.
+
 o  Unpack the distribution (or fetch from the SVN repository at
-   https://gnat-asis.svn.sourceforge.net/svnroot/gnat-asis/trunk/tools/asis2xml).
+   https://svn.code.sf.net/p/gnat-asis/code/trunk, subdirectory
+   tools/asis).
    Enter the top-level directory.
 o  $ make
-o  Copy asis2xml[.exe] to somewhere on your path (perhaps $HOME/local/bin).
 
 Installation
 ------------
 
-Copy asis2xml to a directory on your path.
+Copy asis2xml[.exe] to a directory on your path (perhaps $HOME/local/bin).
 
 Use
 ---
@@ -87,54 +87,7 @@ or variations.
 Options
 -------
 
-asis2xml supports one flag (well, two if you count -h for help):
-
-  -s reports the stream size (in bits) required by record components.
-
-For example,
-
-  type C is range 0 .. 255;
-  type R is record
-     Ch : Character;
-     Cc : C;
-     Lf : Long_Float;
-  end record;
-
-results in
-
-  <ordinary_type_declaration>
-    <defining_identifier>R</defining_identifier>
-    <type_definition>
-      <record_type_definition></record_type_definition>
-      <record_definition>
-        <component_declaration>
-          <defining_identifier>Ch</defining_identifier>
-          <component_definition size="8">
-            <subtype_indication>
-              <identifier>Character</identifier>
-            </subtype_indication>
-          </component_definition>
-        </component_declaration>
-        <component_declaration>
-          <defining_identifier>Cc</defining_identifier>
-          <component_definition size="16">
-            <subtype_indication>
-              <identifier>C</identifier>
-            </subtype_indication>
-          </component_definition>
-        </component_declaration>
-        <component_declaration>
-          <defining_identifier>Lf</defining_identifier>
-          <component_definition size="64">
-            <subtype_indication>
-              <identifier>Long_Float</identifier>
-            </subtype_indication>
-          </component_definition>
-        </component_declaration>
-      </record_definition>
-    </type_definition>
-  </ordinary_type_declaration>
-
+None.
 ===
 Simon Wright, <simon@pushface.org>
 $Id$

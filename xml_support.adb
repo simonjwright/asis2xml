@@ -21,15 +21,12 @@
 --  Copyright (c) 1995-1999, Free Software Foundation, Inc.
 
 with Ada.Characters.Handling;
-with Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
 pragma Warnings (Off, Ada.Text_IO);
 
 with Asis.Compilation_Units;
-with Asis.Data_Decomposition;
 with Asis.Declarations;
 with Asis.Elements;
-with Asis.Exceptions;
 with Asis.Expressions;
 with Asis.Iterator;
 
@@ -150,11 +147,9 @@ package body XML_Support is
 
 
    procedure Initialize (XI : in out Info;
-                         Document : DOM.Core.Node;
-                         Report_Data_Sizes : Boolean := False) is
+                         Document : DOM.Core.Node) is
    begin
       XI.Document := Document;
-      XI.Report_Data_Sizes := Report_Data_Sizes;
       XI.Current := DOM.Core.Nodes.Append_Child
         (XI.Document,
          DOM.Core.Documents.Create_Element (XI.Document, "asis"));
@@ -480,38 +475,6 @@ package body XML_Support is
                when others => null;
 
             end case;
-
-            --  Special support for record component size.
-            if State.Report_Data_Sizes
-              and then Asis.Elements.Definition_Kind (Element)
-              = A_Subtype_Indication
-            then
-               declare
-                  N : DOM.Core.Node := State.Current;
-               begin
-                  while N /= null
-                    and then DOM.Core.Nodes.Node_Name (N)
-                    /= "component_definition" loop
-                     N := DOM.Core.Nodes.Parent_Node (N);
-                  end loop;
-                  if N /= null then
-                     DOM.Core.Elements.Set_Attribute
-                       (N,
-                        "size",
-                        Ada.Strings.Fixed.Trim
-                          (Asis.ASIS_Natural'Image
-                             (Asis.Data_Decomposition.Size (Element)),
-                           Ada.Strings.Both));
-                  end if;
-               exception
-                  when Asis.Exceptions.ASIS_Inappropriate_Element =>
-                     null;
-                     --  Put_Line
-                     --    (Standard_Error,
-                     --     "getting size: "
-                     --       & Ada.Exceptions.Exception_Information (E));
-               end;
-            end if;
 
          when An_Expression =>             -- Asis.Expressions
             State.Current :=
