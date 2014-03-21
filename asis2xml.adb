@@ -142,7 +142,7 @@ exception
 
    when Asis.Exceptions.ASIS_Inappropriate_Compilation_Unit =>
       Put_Line (Standard_Error,
-                "The input does not contain any Ada UNIT.");
+                "The input does not contain any Ada unit.");
       Usage;
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
