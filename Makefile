@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004/10/24 06:45:43 simon Exp $
+# $Id$
 #
 # Makefile for ASIS2XML.
 
