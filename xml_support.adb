@@ -127,14 +127,7 @@ package body XML_Support is
                      To_Tag_Name
                        (Operator_Kinds'Image
                           (Asis.Elements.Operator_Kind (Element))));
-               when others =>
-                  Tmp := DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Comment
-                       (State.Document,
-                        To_Tag_Name
-                          (Asis.Elements.Defining_Name_Kind (Element)'Img)
-                          & " - unrecognised Defining_Name_Kind"));
+               when others => null;
             end case;
 
          when A_Declaration =>             -- Asis.Declarations
@@ -148,59 +141,116 @@ package body XML_Support is
                      (Asis.Elements.Declaration_Kind (Element)))));
 
             case Asis.Elements.Declaration_Kind (Element) is
-               when A_Private_Type_Declaration |
-                 A_Private_Extension_Declaration |
-                 A_Variable_Declaration |
-                 A_Constant_Declaration |
-                 A_Deferred_Constant_Declaration |
-                 A_Discriminant_Specification |
-                 A_Loop_Parameter_Specification |
-                 A_Procedure_Declaration |
-                 A_Function_Declaration |
-                 A_Parameter_Specification =>
-                  DOM.Core.Elements.Set_Attribute
-                    (State.Current,
-                     "kind",
-                     To_Tag_Name
-                       (Trait_Kinds'Image
-                          (Asis.Elements.Trait_Kind (Element))));
-               when A_Formal_Function_Declaration |
-                    A_Formal_Procedure_Declaration =>
-                  DOM.Core.Elements.Set_Attribute
-                    (State.Current,
-                     "kind",
-                     To_Tag_Name
-                       (Subprogram_Default_Kinds'Image
-                          (Asis.Elements.Default_Kind (Element))));
-               when others =>
-                  Tmp := DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Comment
-                       (State.Document,
-                        To_Tag_Name
-                          (Asis.Elements.Declaration_Kind (Element)'Img)
-                          & " - unrecognised Declaration_Kind (kind)"));
-            end case;
-
-            --  This is an extension of the case above.
-            case Asis.Elements.Declaration_Kind (Element) is
-               when A_Parameter_Specification |
-                 A_Formal_Object_Declaration =>
-                  DOM.Core.Elements.Set_Attribute
-                    (State.Current,
-                     "mode",
-                     To_Tag_Name
-                       (Mode_Kinds'Image
-                          (Asis.Elements.Mode_Kind (Element))));
-               when others =>
-                  null;
---                    Tmp := DOM.Core.Nodes.Append_Child
---                      (State.Current,
---                       DOM.Core.Documents.Create_Comment
---                         (State.Document,
---                          To_Tag_Name
---                            (Asis.Elements.Declaration_Kind (Element)'Img)
---                            & " - unrecognised Declaration_Kind (mode)"));
+               when A_Private_Type_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when A_Limited_Private_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "limited", "true");
+                     when An_Abstract_Private_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "abstract", "true");
+                     when An_Abstract_Limited_Private_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "limited", "true");
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "abstract", "true");
+                     when others => null;
+                  end case;
+               when A_Private_Extension_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Abstract_Private_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "abstract", "true");
+                     when others => null;
+                  end case;
+               when A_Variable_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Aliased_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "aliased", "true");
+                     when others => null;
+                  end case;
+               when A_Constant_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Aliased_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "aliased", "true");
+                     when others => null;
+                  end case;
+               when A_Deferred_Constant_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Aliased_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "aliased", "true");
+                     when others => null;
+                  end case;
+               when A_Discriminant_Specification =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Access_Definition_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "access", "true");
+                     when others => null;
+                  end case;
+               when A_Loop_Parameter_Specification =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when A_Reverse_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "reverse", "true");
+                     when others => null;
+                  end case;
+               when A_Procedure_Declaration |
+                 A_Function_Declaration =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Abstract_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "abstract", "true");
+                     when others => null;
+                  end case;
+               when A_Parameter_Specification =>
+                  case Asis.Elements.Trait_Kind (Element) is
+                     when An_Access_Definition_Trait =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "abstract", "true");
+                     when others => null;
+                  end case;
+                  case Asis.Elements.Mode_Kind (Element) is
+                     when An_In_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "in");
+                     when An_Out_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "out");
+                     when An_In_Out_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "inout");
+                     when others => null;
+                  end case;
+               when A_Formal_Object_Declaration =>
+                  case Asis.Elements.Mode_Kind (Element) is
+                     when An_In_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "in");
+                     when An_Out_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "out");
+                     when An_In_Out_Mode =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "mode", "inout");
+                     when others => null;
+                  end case;
+               when A_Formal_Procedure_Declaration |
+                 A_Formal_Function_Declaration =>
+                  --  Should be Subprogram_Default_Kind
+                  case Asis.Elements.Default_Kind (Element) is
+                     when A_Name_Default =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "default", "name");
+                     when A_Box_Default =>
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current, "default", "box");
+                     when others => null;
+                  end case;
+               when others => null;
             end case;
 
          when A_Definition =>              -- Asis.Definitions
@@ -235,22 +285,22 @@ package body XML_Support is
                     when A_Derived_Type_Definition |
                        A_Derived_Record_Extension_Definition |
                        A_Record_Type_Definition |
-                       A_Tagged_Record_Type_Definition =>
+                      A_Tagged_Record_Type_Definition =>
+                       --  XXX needs more care here
                         DOM.Core.Elements.Set_Attribute
                           (Tmp,
                            "kind",
                            To_Tag_Name
                              (Trait_Kinds'Image
                                 (Asis.Elements.Trait_Kind (Element))));
-                     when others =>
-                        Tmp :=
-                          DOM.Core.Nodes.Append_Child
-                          (State.Current,
-                           DOM.Core.Documents.Create_Comment
-                             (State.Document,
-                              To_Tag_Name
-                                (Asis.Elements.Type_Kind (Element)'Img)
-                                & " - unrecognised Type_Kind"));
+                     when A_Root_Type_Definition =>
+                        DOM.Core.Elements.Set_Attribute
+                          (Tmp,
+                           "kind",
+                           To_Tag_Name
+                             (Root_Type_Kinds'Image
+                                (Asis.Elements.Root_Type_Kind (Element))));
+                     when others => null;
                   end case;
 
                when A_Constraint =>
@@ -281,21 +331,14 @@ package body XML_Support is
                      when A_Formal_Private_Type_Definition |
                        A_Formal_Tagged_Private_Type_Definition |
                        A_Formal_Derived_Type_Definition =>
+                        --  XXX more care needed here
                         DOM.Core.Elements.Set_Attribute
                           (Tmp,
                            "kind",
                            To_Tag_Name
                              (Trait_Kinds'Image
                                 (Asis.Elements.Trait_Kind (Element))));
-                     when others =>
-                        Tmp :=
-                          DOM.Core.Nodes.Append_Child
-                          (State.Current,
-                           DOM.Core.Documents.Create_Comment
-                             (State.Document,
-                              To_Tag_Name
-                                (Asis.Elements.Formal_Type_Kind (Element)'Img)
-                                & " - unrecognised Formal_Type_Kind"));
+                     when others => null;
                   end case;
 
                when A_Discrete_Subtype_Definition |
@@ -311,6 +354,7 @@ package body XML_Support is
                  A_Private_Type_Definition |
                  A_Tagged_Private_Type_Definition |
                  A_Private_Extension_Definition =>
+                  --  XXX more work needed here
                   DOM.Core.Elements.Set_Attribute
                     (State.Current,
                      "kind",
@@ -318,14 +362,7 @@ package body XML_Support is
                        (Trait_Kinds'Image
                           (Asis.Elements.Trait_Kind (Element))));
 
-               when others =>
-                  Tmp := DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Comment
-                       (State.Document,
-                        To_Tag_Name
-                          (Asis.Elements.Definition_Kind (Element)'Img)
-                          & " - unrecognised Definition_Kind"));
+               when others => null;
 
             end case;
 
@@ -402,14 +439,7 @@ package body XML_Support is
                        "prefixed",
                        "false");
                  end if;
-              when others =>
-                 Tmp := DOM.Core.Nodes.Append_Child
-                   (State.Current,
-                    DOM.Core.Documents.Create_Comment
-                      (State.Document,
-                       To_Tag_Name
-                         (Asis.Elements.Expression_Kind (Element)'Img)
-                         & " - unrecognised Expression_Kind"));
+              when others => null;
            end case;
 
          when An_Association =>            -- Asis.Expressions
@@ -460,33 +490,20 @@ package body XML_Support is
                        (Representation_Clause_Kinds'Image
                           (Asis.Elements.Representation_Clause_Kind
                              (Element))));
-               when others =>
-                  Tmp := DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Comment
-                       (State.Document,
-                        To_Tag_Name
-                          (Asis.Elements.Clause_Kind (Element)'Img)
-                          & " - unrecognised Clause_Kind"));
+               when others => null;
             end case;
 
-         when others =>
+         when An_Exception_Handler =>
+            --  Doesn't seem to be a Statement in spite of indication
+            --  in Asis.
             State.Current :=
-              DOM.Core.Nodes.Append_Child
-              (State.Current,
-               DOM.Core.Documents.Create_Element
-                 (State.Document,
-                  To_Tag_Name
-                    (Element_Kinds'Image
-                       (Asis.Elements.Element_Kind (Element)))));
-            Tmp :=
-              DOM.Core.Nodes.Append_Child
-              (State.Current,
-               DOM.Core.Documents.Create_Comment
-                 (State.Document,
-                  To_Tag_Name
-                    (Asis.Elements.Element_Kind (Element)'Img)
-                    & " - unrecognised Element_Kind"));
+            DOM.Core.Nodes.Append_Child
+            (State.Current,
+             DOM.Core.Documents.Create_Element
+               (State.Document, "exception_handler"));
+
+         when Not_An_Element =>
+            null;
 
       end case;
 
