@@ -1,5 +1,3 @@
-# $Id$
-#
 # Makefile for ASIS2XML.
 
 all::

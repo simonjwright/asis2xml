@@ -1,4 +1,4 @@
---  Copyright 2004-2006 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2014 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -13,8 +13,6 @@
 --  330, Boston, MA 02111-1307, USA.
 
 --  Part of ASIS2XML.
---
---  $Id$
 --
 --  Developed from Display_Source, which is distributed as a part of
 --  the ASIS implementation for GNAT and is Copyright (c) 1995-1999,

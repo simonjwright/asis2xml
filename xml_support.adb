@@ -14,8 +14,6 @@
 
 --  Part of ASIS2XML.
 --
---  $Id$
---
 --  Developed from the Node_Trav component of Display_Source, which is
 --  distributed as a part of the ASIS implementation for GNAT and is
 --  Copyright (c) 1995-1999, Free Software Foundation, Inc.
