@@ -8,6 +8,18 @@ This program converts a unit's ASIS representation into XML, so as to
 make it easier to develop transformational tools using (for example)
 XSLT.
 
+Licensing
+---------
+
+ASIS2XML is released under the GNU General Public Licence Version 2, a
+copy of which is in the file COPYING.
+
+Location
+--------
+
+ASIS2XML's home page is at
+<http://gnat-asis.sourceforge.net/pmwiki.php/Main/ASIS2XML>.
+
 Prerequisites
 -------------
 
@@ -21,15 +33,14 @@ Building
 These instructions are written for Linux and assume you've already
 extracted the distribution into your home directory; the files are at
 ~/asis2xml-yyyymmdd/. The supplied Makefile uses the GNAT Project file
-build.gpr, which makes assumptions about where things are; they should
-be straightforward to change.
+asis2xml.gpr, which makes assumptions about where things are; they
+should be straightforward to change.
 
 Install ASIS-for-GNAT. I've used "make INSTALL_DIR=$HOME/asis-3.15p"
 (substitute your GNAT version there).
 
-Make a symbolic link ~/asis pointing to the directory where the ASIS
-installation has placed the source code (with 3.15p it's in
-INSTALL_DIR/asis).
+Make a symbolic link ~/asis pointing to $INSTALL_DIR. There should now
+be a file ~/asis/asis.gpr and a directory ~/asis/asis/.
 
 Unpack XML/Ada.
 
@@ -46,24 +57,23 @@ Copy asis2xml to a directory on your path.
 Use
 ---
 
-asis2xml will accept either a spec file (.ads) or a tree file
-(.adt). The GNAT ASIS implementation doesn't understand Project files,
-so if you have any sort of complex path setup the way to go is to
-generate the tree file:
+asis2xml will accept a tree file (.adt), or a directory which is a
+GNAT object directory containing a set of .adt files. The GNAT ASIS
+implementation doesn't understand Project files, so if you have any
+sort of complex path setup the way to go is to generate the tree files
+using the Project:
 
-  $ gnatmake -Pbuild -c -u -f -gnatct example.ads
+  $ gnatmake -Pbuild -c -f -gnatct example.ads
 
 creates example.adt in your project (build.gpr)'s Object_Dir -- in the
-case of asis2xml's build.gpr, this is ./.build. You have to have the
-input file in the current directory, because asis2xml assumes the
-parameter filename specifies the unit. This will be sorted!
+case of asis2xml's asis2xml.gpr, this is ./.build.
 
-  $ asis2xml example.adt >example.xml
+  $ asis2xml .build/example.adt >example.xml
 
 The output is in "packed" XML; to get a more legible view, you can
 use HTML Tidy from http://tidy.sourceforge.net/:
 
-   $ asis2xml example.adt | tidy -xml -i >example.xml
+   $ asis2xml .build/example.adt | tidy -xml -i >example.tidy.xml
 
 or variations.
 

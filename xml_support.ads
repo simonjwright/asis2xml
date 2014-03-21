@@ -28,8 +28,8 @@ package XML_Support is
    type Info is private;
 
    procedure Initialize (XI : in out Info;
-                         Root : Asis.Element;
-                         Document : DOM.Core.Node);
+                         Document : DOM.Core.Node;
+                         Report_Data_Sizes : Boolean := False);
 
    procedure Add_Compilation_Unit (The_Unit : Asis.Compilation_Unit;
                                    To : in out Info);
@@ -39,8 +39,8 @@ package XML_Support is
 private
 
    type Info is record
-      Root : Asis.Element;
       Document : DOM.Core.Document;
+      Report_Data_Sizes : Boolean;
       Current : DOM.Core.Node;
    end record;
 
