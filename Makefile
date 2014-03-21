@@ -12,15 +12,12 @@ clean::
 #######
 # Build
 #
-# Expects ~/asis to be a symbolic link to the directory above the ASIS
-# installation directory (eg, ~/local/lib/gnat), and ~/xmlada to be a
-# link to the XML/Ada installation directory (eg,
-# /usr/local/lib/xmlada-1.0).
+# Expects asis.gpr and xmlada.gpr to be on ADA_PROJECT_PATH.
 
 all:: .build asis2xml
 
 asis2xml: force
-	ADA_PROJECT_PATH=~/asis gnatmake -Pasis2xml
+	gnatmake -Pasis2xml
 
 .build:
 	mkdir .build

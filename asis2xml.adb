@@ -136,7 +136,8 @@ begin
 
    DOM.Core.Nodes.Print (Doc,
                          Print_Comments => True,
-                         Print_XML_PI => True);
+                         Print_XML_PI => True,
+                         EOL_Sequence => "");
 
 exception
 
