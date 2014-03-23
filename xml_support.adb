@@ -24,6 +24,7 @@ pragma Warnings (Off, Ada.Text_IO);
 
 with Asis.Compilation_Units;
 with Asis.Declarations;
+with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
@@ -62,9 +63,9 @@ package body XML_Support is
                    Control : in out Asis.Traverse_Control;
                    State : in out Info);
    procedure Traverse_Tree_For_XML is new Asis.Iterator.Traverse_Element
-     (XML_Support.Info,
-      XML_Support.Pre,
-      XML_Support.Post);
+     (State_Information => Info,
+      Pre_Operation     => Pre,
+      Post_Operation    => Post);
 
 
    ---------------------------------------
@@ -96,19 +97,19 @@ package body XML_Support is
       declare
          Context_Clauses : constant Asis.Context_Clause_List
            := Asis.Elements.Context_Clause_Elements
-           (Compilation_Unit => The_Unit,
-            Include_Pragmas => True);
+             (Compilation_Unit => The_Unit,
+              Include_Pragmas => True);
          Context : constant DOM.Core.Node
            := DOM.Core.Nodes.Append_Child
-           (Unit,
-            DOM.Core.Documents.Create_Element (To.Document,
-                                               "context_clauses"));
+             (Unit,
+              DOM.Core.Documents.Create_Element (To.Document,
+                                                 "context_clauses"));
       begin
          for C in Context_Clauses'Range loop
             To.Current := Context;
-            Traverse_Tree_For_XML (Context_Clauses (C),
-                                   The_Control,
-                                   To);
+            Traverse_Tree_For_XML (Element => Context_Clauses (C),
+                                   Control => The_Control,
+                                   State   => To);
          end loop;
       end;
 
@@ -116,9 +117,10 @@ package body XML_Support is
       To.Current := DOM.Core.Nodes.Append_Child
         (Unit,
          DOM.Core.Documents.Create_Element (To.Document, "unit_declaration"));
-      Traverse_Tree_For_XML (Asis.Elements.Unit_Declaration (The_Unit),
-                             The_Control,
-                             To);
+      Traverse_Tree_For_XML
+        (Element => Asis.Elements.Unit_Declaration (The_Unit),
+         Control => The_Control,
+         State   => To);
 
       --  Add the compilation pragmas (if any).
       declare
@@ -126,15 +128,15 @@ package body XML_Support is
            := Asis.Elements.Compilation_Pragmas (The_Unit);
          Pragmas : constant DOM.Core.Node
            := DOM.Core.Nodes.Append_Child
-           (Unit,
-            DOM.Core.Documents.Create_Element (To.Document,
-                                               "compilation_pragmas"));
+             (Unit,
+              DOM.Core.Documents.Create_Element (To.Document,
+                                                 "compilation_pragmas"));
       begin
          for C in Compilation_Pragmas'Range loop
             To.Current := Pragmas;
-            Traverse_Tree_For_XML (Compilation_Pragmas (C),
-                                   The_Control,
-                                   To);
+            Traverse_Tree_For_XML (Element => Compilation_Pragmas (C),
+                                   Control => The_Control,
+                                   State   => To);
          end loop;
       end;
 
@@ -210,45 +212,73 @@ package body XML_Support is
                   Control : in out Asis.Traverse_Control;
                   State : in out Info) is
       pragma Unreferenced (Control);
+
+      --  If this is the kind of element that has visible/private
+      --  parts, we find and traverse the visible and private parts
+      --  separately inside <visible_part/> and <private_part/>
+      --  respectively.
+
+      procedure Handle_Content_With_Visibility
+        (Content           : Asis.Declarative_Item_List;
+         Visibility_Element : String);
+      procedure Handle_Content_With_Visibility
+        (Content           : Asis.Declarative_Item_List;
+         Visibility_Element : String) is
+         Local_Control : Asis.Traverse_Control := Asis.Continue;
+      begin
+         State.Current := DOM.Core.Nodes.Append_Child
+           (State.Current,
+            DOM.Core.Documents.Create_Element
+              (State.Document, Visibility_Element));
+         for J in Content'Range loop
+            Traverse_Tree_For_XML (Element => Content (J),
+                                   Control => Local_Control,
+                                   State => State);
+         end loop;
+         State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
+      end Handle_Content_With_Visibility;
+
       Tmp : DOM.Core.Node;
       use Asis;
       use type DOM.Core.Node;
+
    begin
 
       --  Put_Line ("Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
+
       case Asis.Elements.Element_Kind (Element) is
 
          when A_Pragma =>                  -- Asis.Elements
             State.Current :=
               DOM.Core.Nodes.Append_Child
-              (State.Current,
-               DOM.Core.Documents.Create_Element
-                 (State.Document,
-                  To_Tag_Name
-                       (Pragma_Kinds'Image
-                          (Asis.Elements.Pragma_Kind (Element)))));
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Pragma_Kinds'Image
+                         (Asis.Elements.Pragma_Kind (Element)))));
             Tmp :=
               DOM.Core.Nodes.Append_Child
-              (State.Current,
-               DOM.Core.Documents.Create_Text_Node
-                 (State.Document,
-                  +Asis.Elements.Pragma_Name_Image (Element)));
+                (State.Current,
+                 DOM.Core.Documents.Create_Text_Node
+                   (State.Document,
+                    +Asis.Elements.Pragma_Name_Image (Element)));
 
          when A_Defining_Name =>           -- Asis.Declarations
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                       (Defining_Name_Kinds'Image
-                          (Asis.Elements.Defining_Name_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Defining_Name_Kinds'Image
+                         (Asis.Elements.Defining_Name_Kind (Element)))));
             Tmp :=
               DOM.Core.Nodes.Append_Child
-              (State.Current,
-               DOM.Core.Documents.Create_Text_Node
-                 (State.Document,
-                  +Asis.Declarations.Defining_Name_Image (Element)));
+                (State.Current,
+                 DOM.Core.Documents.Create_Text_Node
+                   (State.Document,
+                    +Asis.Declarations.Defining_Name_Image (Element)));
 
             case Asis.Elements.Defining_Name_Kind (Element) is
                when A_Defining_Operator_Symbol =>
@@ -263,13 +293,13 @@ package body XML_Support is
 
          when A_Declaration =>             -- Asis.Declarations
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Declaration_Kinds'Image
-                     (Asis.Elements.Declaration_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Declaration_Kinds'Image
+                         (Asis.Elements.Declaration_Kind (Element)))));
 
             --  Trait handling
             case Asis.Elements.Declaration_Kind (Element) is
@@ -347,25 +377,25 @@ package body XML_Support is
 
          when A_Definition =>              -- Asis.Definitions
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Definition_Kinds'Image
-                     (Asis.Elements.Definition_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Definition_Kinds'Image
+                         (Asis.Elements.Definition_Kind (Element)))));
 
             case Asis.Elements.Definition_Kind (Element) is
 
                when A_Type_Definition =>
                   Tmp :=
                     DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Element
-                       (State.Document,
-                        To_Tag_Name
-                          (Type_Kinds'Image
-                             (Asis.Elements.Type_Kind (Element)))));
+                      (State.Current,
+                       DOM.Core.Documents.Create_Element
+                         (State.Document,
+                          To_Tag_Name
+                            (Type_Kinds'Image
+                               (Asis.Elements.Type_Kind (Element)))));
                   case Asis.Elements.Type_Kind (Element) is
                      when An_Access_Type_Definition =>
                         DOM.Core.Elements.Set_Attribute
@@ -415,12 +445,12 @@ package body XML_Support is
                when A_Formal_Type_Definition =>
                   Tmp :=
                     DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Element
-                       (State.Document,
-                        To_Tag_Name
-                          (Formal_Type_Kinds'Image
-                             (Asis.Elements.Formal_Type_Kind (Element)))));
+                      (State.Current,
+                       DOM.Core.Documents.Create_Element
+                         (State.Document,
+                          To_Tag_Name
+                            (Formal_Type_Kinds'Image
+                               (Asis.Elements.Formal_Type_Kind (Element)))));
                   case Asis.Elements.Formal_Type_Kind (Element) is
                      when  A_Formal_Access_Type_Definition =>
                         DOM.Core.Elements.Set_Attribute
@@ -476,42 +506,42 @@ package body XML_Support is
 
          when An_Expression =>             -- Asis.Expressions
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Expression_Kinds'Image
-                     (Asis.Elements.Expression_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Expression_Kinds'Image
+                         (Asis.Elements.Expression_Kind (Element)))));
             case Asis.Elements.Expression_Kind (Element) is
                when An_Attribute_Reference =>
                   Tmp :=
                     DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        To_Tag_Name
-                          (Attribute_Kinds'Image
-                             (Asis.Elements.Attribute_Kind (Element)))));
+                      (State.Current,
+                       DOM.Core.Documents.Create_Text_Node
+                         (State.Document,
+                          To_Tag_Name
+                            (Attribute_Kinds'Image
+                               (Asis.Elements.Attribute_Kind (Element)))));
                when An_Identifier |
                  An_Operator_Symbol |
                  A_Character_Literal |
                  An_Enumeration_Literal =>
                   Tmp :=
                     DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        +Asis.Expressions.Name_Image (Element)));
+                      (State.Current,
+                       DOM.Core.Documents.Create_Text_Node
+                         (State.Document,
+                          +Asis.Expressions.Name_Image (Element)));
                when An_Integer_Literal |
                  A_Real_Literal |
                  A_String_Literal =>
                   Tmp :=
                     DOM.Core.Nodes.Append_Child
-                    (State.Current,
-                     DOM.Core.Documents.Create_Text_Node
-                       (State.Document,
-                        +Asis.Expressions.Value_Image (Element)));
+                      (State.Current,
+                       DOM.Core.Documents.Create_Text_Node
+                         (State.Document,
+                          +Asis.Expressions.Value_Image (Element)));
                when A_Function_Call =>
                   if Asis.Expressions.Is_Prefix_Call (Element) then
                      DOM.Core.Elements.Set_Attribute
@@ -529,43 +559,43 @@ package body XML_Support is
 
          when An_Association =>            -- Asis.Expressions
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Association_Kinds'Image
-                     (Asis.Elements.Association_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Association_Kinds'Image
+                         (Asis.Elements.Association_Kind (Element)))));
 
          when A_Statement =>               -- Asis.Statements
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Statement_Kinds'Image
-                     (Asis.Elements.Statement_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Statement_Kinds'Image
+                         (Asis.Elements.Statement_Kind (Element)))));
 
          when A_Path =>                    -- Asis.Statements
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Path_Kinds'Image
-                     (Asis.Elements.Path_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Path_Kinds'Image
+                         (Asis.Elements.Path_Kind (Element)))));
 
          when A_Clause =>                  -- Asis.Clauses
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document,
-                To_Tag_Name
-                  (Clause_Kinds'Image
-                     (Asis.Elements.Clause_Kind (Element)))));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document,
+                    To_Tag_Name
+                      (Clause_Kinds'Image
+                         (Asis.Elements.Clause_Kind (Element)))));
             case Asis.Elements.Clause_Kind (Element) is
                when A_Representation_Clause =>
                   DOM.Core.Elements.Set_Attribute
@@ -582,19 +612,73 @@ package body XML_Support is
             --  Doesn't seem to be a Statement in spite of indication
             --  in Asis.
             State.Current :=
-            DOM.Core.Nodes.Append_Child
-            (State.Current,
-             DOM.Core.Documents.Create_Element
-               (State.Document, "exception_handler"));
+              DOM.Core.Nodes.Append_Child
+                (State.Current,
+                 DOM.Core.Documents.Create_Element
+                   (State.Document, "exception_handler"));
 
-         --  --  --|A2015 start
-         --  when An_Expression_Path =>        -- Asis.Expressions
-         --     null;
-         --  --  --|A2015 end
+            --  --  --|A2012 start
+            --  when An_Expression_Path =>        -- Asis.Expressions
+            --     null;
+            --  --  --|A2012 end
 
          when Not_An_Element =>
             null;
 
+      end case;
+
+      --  Now handle the cases where we need to handle visible/private
+      --  parts. In these cases we prevent the incoming iteration from
+      --  descending further and do the iteration via a recursive
+      --  traversal, first inserting a <visible_part/> or
+      --  <private_part/> element as appropriate.
+
+      --  For (generic) packages, the relevant element is the
+      --  declaration.
+      case Asis.Elements.Declaration_Kind (Element) is
+         when
+           A_Generic_Package_Declaration |
+           A_Package_Declaration
+           =>
+            Control := Asis.Abandon_Children;
+            Handle_Content_With_Visibility
+              (Content            =>
+                 Asis.Declarations.Visible_Part_Declarative_Items
+                   (Declaration     => Element,
+                    Include_Pragmas => True),
+               Visibility_Element => "visible_part");
+            Handle_Content_With_Visibility
+              (Content            =>
+                 Asis.Declarations.Private_Part_Declarative_Items
+                   (Declaration     => Element,
+                    Include_Pragmas => True),
+               Visibility_Element => "private_part");
+
+         when others =>
+            null;
+      end case;
+
+      --  For protected and task types and objects, the relevant
+      --  elements are definitions.
+      case Asis.Elements.Definition_Kind (Element) is
+         when
+           A_Protected_Definition |
+           A_Task_Definition
+           =>
+            Control := Asis.Abandon_Children;
+            Handle_Content_With_Visibility
+              (Content => Asis.Definitions.Visible_Part_Items
+                 (Definition      => Element,
+                  Include_Pragmas => True),
+               Visibility_Element => "visible_part");
+            Handle_Content_With_Visibility
+              (Content => Asis.Definitions.Private_Part_Items
+                 (Definition      => Element,
+                  Include_Pragmas => True),
+               Visibility_Element => "private_part");
+
+         when others =>
+            null;
       end case;
 
    end Pre;
