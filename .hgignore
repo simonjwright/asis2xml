@@ -2,4 +2,8 @@ syntax: glob
 
 .build
 
-asis2xml
+# The executable
+asis2xml{,.exe}
+
+# Distributions
+asis2xml-*
