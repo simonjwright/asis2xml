@@ -24,27 +24,28 @@ asis2xml: force
 # Distribution construction
 
 # Create the current date, in the form yyyymmddSSS (SSS is the value
-# of SUBRELEASE, default svn).
+# of SUBRELEASE, default hg).
 # You can override the use of today's date and subrelease by setting
 # DATE on the make command line. This might be useful for a patch
 # release.
-SUBRELEASE = svn
+SUBRELEASE = hg
 DATE = $(shell date +%Y%m%d)$(SUBRELEASE)
 
-DOCS = \
-COPYING \
+DOCS =						\
+CHANGES						\
+COPYING						\
 INSTALL
 
-SRC = \
-asis2xml.adb \
+SRC =						\
+asis2xml.adb					\
 xml_support.ad[bs]
 
-BUILDING = \
-Makefile \
+BUILDING =					\
+Makefile					\
 asis2xml.gpr
 
-DISTRIBUTION_FILES = \
-asis2xml-$(DATE).tgz \
+DISTRIBUTION_FILES =				\
+asis2xml-$(DATE).tgz				\
 asis2xml-$(DATE).zip
 
 asis2xml-$(DATE).tgz: asis2xml-$(DATE)
@@ -63,13 +64,32 @@ asis2xml-$(DATE): $(DOCS) $(SRC) $(BUILDING)
 	cp -p $(BUILDING) $@
 
 dist:: $(DISTRIBUTION_FILES)
-	touch dist
+.PHONY: dist
 
+
+############################
+# Documentation upload to SF
+
+SFUSER ?= simonjwright
+
+upload-docs:: index.html
+	rsync \
+	  --compress \
+	  --copy-unsafe-links \
+	  --cvs-exclude \
+	  --delete \
+	  --perms \
+	  --recursive \
+	  --rsh=ssh \
+	  --times \
+	  --update \
+	  --verbose \
+	  $< \
+	  $(SFUSER),asis2xml@web.sourceforge.net:htdocs/
 
 #######
 # Clean
 
 clean::
-	rm -f asis2xml
-	rm -rf .build
-	rm -f dist
+	gnatclean -P asis2xml
+	rm -rf asis2xml-*
