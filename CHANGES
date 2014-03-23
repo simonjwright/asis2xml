@@ -8,9 +8,14 @@ This program converts a unit's ASIS representation into XML, so as to
 make it easier to develop reporting and transformational tools using
 (for example) XSLT.
 
+20140323
+
+    o Reports the visible and private parts of package, protected and
+      task specs.
+
 20130413
 
-    o Compatible with GNAT GPL 2012.
+    o Compatible with GNAT GPL 2013.
 
     o Removed the -s support (component sizes for streaming); it
       didn't work for nested records.
