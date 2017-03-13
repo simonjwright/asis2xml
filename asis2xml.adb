@@ -91,12 +91,12 @@ begin
       elsif GNAT.OS_Lib.Is_Directory (File_Name) then
          Asis.Ada_Environments.Associate
            (The_Context => SS_Context,
-            Name => "SS_Context",
+            Name        => "SS_Context",
             Parameters  => "-SN -CA -FT -T" & (+File_Name));
       elsif GNAT.Directory_Operations.File_Extension (File_Name) = ".adt" then
          Asis.Ada_Environments.Associate
            (The_Context => SS_Context,
-            Name => "SS_Context",
+            Name        => "SS_Context",
             Parameters  => "-SN -C1 " & (+File_Name));
       else
          Usage;
@@ -118,9 +118,10 @@ begin
       for I in All_Units'Range loop
          Next_Unit := All_Units (I);
          if Asis.Compilation_Units.Unit_Origin (Next_Unit)
-           = Asis.An_Application_Unit then
+           = Asis.An_Application_Unit
+         then
             XML_Support.Add_Compilation_Unit (The_Unit => Next_Unit,
-                                              To => XI);
+                                              To       => XI);
          end if;
       end loop;
    end;
@@ -133,8 +134,8 @@ begin
 
    DOM.Core.Nodes.Print (Doc,
                          Print_Comments => True,
-                         Print_XML_PI => True,
-                         EOL_Sequence => "");
+                         Print_XML_PI   => True,
+                         EOL_Sequence   => "");
 
 exception
 

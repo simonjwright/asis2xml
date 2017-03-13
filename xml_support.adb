@@ -56,12 +56,12 @@ package body XML_Support is
    function To_Tag_Name (Image : String) return String;
 
    --  Tree traversal
-   procedure Pre (Element : in Asis.Element;
+   procedure Pre (Element : in     Asis.Element;
                   Control : in out Asis.Traverse_Control;
-                  State : in out Info);
-   procedure Post (Element : in Asis.Element;
+                  State   : in out Info);
+   procedure Post (Element : in     Asis.Element;
                    Control : in out Asis.Traverse_Control;
-                   State : in out Info);
+                   State   : in out Info);
    procedure Traverse_Tree_For_XML is new Asis.Iterator.Traverse_Element
      (State_Information => Info,
       Pre_Operation     => Pre,
@@ -73,7 +73,7 @@ package body XML_Support is
    ---------------------------------------
 
    procedure Add_Compilation_Unit (The_Unit : Asis.Compilation_Unit;
-                                   To : in out Info) is
+                                   To       : in out Info) is
       The_Control : Asis.Traverse_Control := Asis.Continue;
       Starting : constant DOM.Core.Node := To.Current;
       --  Remember the starting node (will be <asis/>)
@@ -208,9 +208,9 @@ package body XML_Support is
    end Add_Trait;
 
 
-   procedure Pre (Element : in Asis.Element;
+   procedure Pre (Element : in     Asis.Element;
                   Control : in out Asis.Traverse_Control;
-                  State : in out Info) is
+                  State   : in out Info) is
       pragma Unreferenced (Control);
 
       --  If this is the kind of element that has visible/private
@@ -219,10 +219,10 @@ package body XML_Support is
       --  respectively.
 
       procedure Handle_Content_With_Visibility
-        (Content           : Asis.Declarative_Item_List;
+        (Content            : Asis.Declarative_Item_List;
          Visibility_Element : String);
       procedure Handle_Content_With_Visibility
-        (Content           : Asis.Declarative_Item_List;
+        (Content            : Asis.Declarative_Item_List;
          Visibility_Element : String) is
          Local_Control : Asis.Traverse_Control := Asis.Continue;
       begin
@@ -233,7 +233,7 @@ package body XML_Support is
          for J in Content'Range loop
             Traverse_Tree_For_XML (Element => Content (J),
                                    Control => Local_Control,
-                                   State => State);
+                                   State   => State);
          end loop;
          State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
       end Handle_Content_With_Visibility;
@@ -641,6 +641,19 @@ package body XML_Support is
            A_Package_Declaration
            =>
             Control := Asis.Abandon_Children;
+            declare
+               Local_Control : Asis.Traverse_Control := Asis.Continue;
+               Names : constant Asis.Defining_Name_List -- should have length 1
+                 := Asis.Declarations.Names (Element);
+            begin
+               if Names'Length /= 1 then
+                  raise Constraint_Error
+                    with "package has A_Defining_Name_List with length /= 1";
+               end if;
+               Traverse_Tree_For_XML (Element => Names (Names'First),
+                                      Control => Local_Control,
+                                      State   => State);
+            end;
             Handle_Content_With_Visibility
               (Content            =>
                  Asis.Declarations.Visible_Part_Declarative_Items
@@ -684,9 +697,9 @@ package body XML_Support is
    end Pre;
 
 
-   procedure Post (Element : in Asis.Element;
+   procedure Post (Element : in     Asis.Element;
                    Control : in out Asis.Traverse_Control;
-                   State : in out Info) is
+                   State   : in out Info) is
       pragma Unreferenced (Element);
       pragma Unreferenced (Control);
    begin
