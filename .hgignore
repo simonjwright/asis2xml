@@ -1,6 +1,8 @@
 syntax: glob
 
 .build
+testing
+*.db*
 
 # The executable
 asis2xml{,.exe}

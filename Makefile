@@ -2,6 +2,8 @@
 
 all::
 
+install::
+
 dist::
 
 clean::
@@ -15,9 +17,12 @@ clean::
 all:: asis2xml
 
 asis2xml: force
-	gnatmake -p -Pasis2xml
+	gprclean -p -Pasis2xml
 
 .PHONY: force
+
+install::
+	gprinstall --mode=usage -P asis2xml
 
 
 ############################
@@ -72,7 +77,7 @@ dist:: $(DISTRIBUTION_FILES)
 
 SFUSER ?= simonjwright
 
-upload-docs:: index.html
+upload-docs:: index.html sjw.css
 	rsync \
 	  --compress \
 	  --copy-unsafe-links \
@@ -84,12 +89,14 @@ upload-docs:: index.html
 	  --times \
 	  --update \
 	  --verbose \
-	  $< \
+	  $^ \
 	  $(SFUSER),asis2xml@web.sourceforge.net:htdocs/
 
 #######
 # Clean
 
 clean::
-	gnatclean -P asis2xml
+	gprclean -P asis2xml
 	rm -rf asis2xml-*
+
+.PHONY: clean
