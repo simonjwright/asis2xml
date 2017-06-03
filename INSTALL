@@ -17,13 +17,12 @@ copy of which is in the file COPYING.
 Location
 --------
 
-ASIS2XML's home page is at
-<http://gnat-asis.sourceforge.net/pmwiki.php/Main/ASIS2XML>.
+ASIS2XML's home page is at <https://sourceforge.net/projects/asis2xml>.
 
 Prerequisites
 -------------
 
-GNAT 3.15p or later (tested with GNAT GPL 2012)
+GNAT 3.15p or later (tested with GNAT GPL 2012-6)
 The corresponding GNAT ASIS
 XML/Ada 1.0 or later
 
@@ -34,32 +33,23 @@ Note, many Libre tools and libraries install in $HOME/local, and the
 ASIS2XML GPR and the support installation instructions below assume
 this. They do assume a recent version of GNAT.
 
-Install ASIS-for-GNAT if not already installed with your compiler. My
-procedure:
-o  Unpack the distribution and enter the top-level directory.
-o  $ make
-o  $ make all install prefix=$HOME/local
-
-Install XML/Ada if not already installed with your compiler. My procedure:
-o  Unpack the distribution (or fetch from the SVN repository at
-   http://svn.eu.adacore.com/anonsvn/Dev/trunk/xmlada). Enter the
-   top-level directory.
-o  $ ./configure --prefix=$HOME/local
-o  $ make
-o  $ make install
+Install ASIS-for-GNAT if not already installed with your compiler.
 
 Build ASIS2XML.
 
-o  Unpack the distribution (or fetch from the SVN repository at
-   https://svn.code.sf.net/p/gnat-asis/code/trunk, subdirectory
-   tools/asis).
+o  Unpack the distribution or fetch from the Mercurial repository at
+   Sourceforge:
+      hg clone http://hg.code.sf.net/p/asis2xml/code asis2xml
    Enter the top-level directory.
 o  $ make
 
 Installation
 ------------
 
-Copy asis2xml[.exe] to a directory on your path (perhaps $HOME/local/bin).
+Copy asis2xml[.exe] to a directory on your path (perhaps
+$HOME/local/bin), or just install with your compiler by 'make install'
+(this is the best option if you run more than one compiler version,
+because the compiler and ASIS have to be compatible).
 
 Use
 ---
@@ -70,7 +60,7 @@ implementation doesn't understand Project files, so if you have any
 sort of complex path setup the way to go is to generate the tree files
 using the Project:
 
-  $ gnatmake -Pbuild -c -f -gnatct example.ads
+  $ gprbuild -Pbuild -c -u -f -gnatct example.ads
 
 creates example.adt in your project (build.gpr)'s Object_Dir -- in the
 case of asis2xml's asis2xml.gpr, this is ./.build.
@@ -88,5 +78,6 @@ Options
 -------
 
 None.
+
 ===
 Simon Wright, <simon@pushface.org>
