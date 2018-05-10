@@ -17,7 +17,7 @@ clean::
 all:: asis2xml
 
 asis2xml: force
-	gprclean -p -Pasis2xml
+	gprbuild -p -Pasis2xml
 
 .PHONY: force
 
