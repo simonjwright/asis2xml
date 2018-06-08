@@ -514,14 +514,19 @@ package body XML_Support is
                          (Asis.Elements.Expression_Kind (Element)))));
             case Asis.Elements.Expression_Kind (Element) is
                when An_Attribute_Reference =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                      (State.Current,
-                       DOM.Core.Documents.Create_Text_Node
-                         (State.Document,
-                          To_Tag_Name
-                            (Attribute_Kinds'Image
-                               (Asis.Elements.Attribute_Kind (Element)))));
+                  declare
+                     Kind : constant String :=
+                       To_Tag_Name
+                         (Attribute_Kinds'Image
+                            (Asis.Elements.Attribute_Kind (Element)));
+                     Last : constant Integer
+                       := Kind'Last - String'("_attribute")'Length;
+                  begin
+                     DOM.Core.Elements.Set_Attribute
+                       (State.Current,
+                        "kind",
+                        Kind (Kind'First .. Last));
+                  end;
                when An_Identifier |
                  An_Operator_Symbol |
                  A_Character_Literal |
