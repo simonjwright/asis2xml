@@ -253,15 +253,31 @@ package body XML_Support is
                 (State.Current,
                  DOM.Core.Documents.Create_Element
                    (State.Document,
-                    To_Tag_Name
-                      (Pragma_Kinds'Image
-                         (Asis.Elements.Pragma_Kind (Element)))));
-            Tmp :=
-              DOM.Core.Nodes.Append_Child
-                (State.Current,
-                 DOM.Core.Documents.Create_Text_Node
-                   (State.Document,
-                    +Asis.Elements.Pragma_Name_Image (Element)));
+                    "pragma"));
+            declare
+               Kind : constant String :=
+                 To_Tag_Name
+                   (Pragma_Kinds'Image
+                      (Asis.Elements.Pragma_Kind (Element)));
+               Last : constant Integer
+                 := Kind'Last - String'("_pragma")'Length;
+            begin
+               DOM.Core.Elements.Set_Attribute
+                 (State.Current,
+                  "kind",
+                  Kind (Kind'First .. Last));
+               Tmp :=
+                 DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Element
+                      (State.Document,
+                       "identifier"));
+               Tmp := DOM.Core.Nodes.Append_Child
+                 (Tmp,
+                  DOM.Core.Documents.Create_Text_Node
+                    (State.Document,
+                     +Asis.Elements.Pragma_Name_Image (Element)));
+            end;
 
          when A_Defining_Name =>           -- Asis.Declarations
             State.Current :=
