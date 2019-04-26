@@ -1,0 +1,10 @@
+.build
+
+testing
+*.db*
+*.ali
+*.adt
+*.xml
+
+# The executable
+asis2xml
