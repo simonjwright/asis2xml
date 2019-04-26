@@ -8,6 +8,15 @@ This program converts a unit's ASIS representation into XML, so as to
 make it easier to develop reporting and transformational tools using
 (for example) XSLT.
 
+20190426
+
+    o Compatible with GNAT CE 2018, FSF GCC 8, 9.
+    o Fixes bug #4, Attribute Reference kind.
+    o Fixes bug #5, Doesn't build (only applied to repo).
+    o Fixes bug #6, Representation of pragmas.
+
+    Note, all the fixed bugs were in fact fixed in May, June 2018.
+
 20170603
 
     o Compatible with GNAT GPL 2016, FSF GCC 6, 7.
