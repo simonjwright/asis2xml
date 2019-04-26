@@ -1,4 +1,4 @@
---  Copyright 2004-2014, 2018 Simon Wright <simon@pushface.org>
+--  Copyright 2004-2014, 2018-2019 Simon Wright <simon@pushface.org>
 
 --  This package is free software; you can redistribute it and/or
 --  modify it under terms of the GNU General Public License as
@@ -419,10 +419,6 @@ package body XML_Support is
                            To_Tag_Name
                              (Access_Type_Kinds'Image
                                 (Asis.Elements.Access_Type_Kind (Element))));
-                        --  It seems more reasonable to add the
-                        --  'not_null' attribute to the
-                        --  <access_type_definition/> element than to
-                        --  the enclosing <type_definition/>.
                         Add_Trait (Asis.Elements.Trait_Kind (Element),
                                    Tmp);
                      when A_Derived_Type_Definition |
@@ -499,7 +495,8 @@ package body XML_Support is
                        (Discrete_Range_Kinds'Image
                           (Asis.Elements.Discrete_Range_Kind (Element))));
 
-               when A_Component_Definition |
+               when A_Subtype_Indication |
+                 A_Component_Definition |
                  A_Private_Type_Definition |
                  A_Tagged_Private_Type_Definition |
                  A_Private_Extension_Definition =>
@@ -514,6 +511,8 @@ package body XML_Support is
                      To_Tag_Name
                        (Access_Definition_Kinds'Image
                           (Asis.Elements.Access_Definition_Kind (Element))));
+                  Add_Trait (Asis.Elements.Trait_Kind (Element),
+                             State.Current);
 
                when others => null;
 
