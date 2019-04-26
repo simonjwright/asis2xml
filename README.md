@@ -10,13 +10,14 @@ make it easier to develop reporting and transformational tools using
 <p>There is no XML Schema as yet. The output's structure is quite
 close to that of ASIS, at least in overall terms; for example,
 an `A_Defining_Name` element in ASIS is represented as a
-`<defining_name/>` element in XML. In turn, ASIS's structure is
+`&lt;defining_name/&gt;` element in XML. In turn, ASIS's structure is
 that of the Ada RM.
 
 <p>One difference is that, for the kinds of element that have
 visible/private parts (normal and generic packages, tasks and
 protected types) the visible and private parts are enclosed in
-`<visible_part/>` and `<private_part/>` elements respectively.
+`&lt;visible_part/&gt;` and `&lt;private_part/&gt;` elements
+respectively.
 
 ## Example ##
 
@@ -63,8 +64,8 @@ of [ASIS for GNAT](https://sourceforge.net/projects/gnat-asis/), and
 releases up to 20130413 can be found there.
 
 Later, it moved
-to [ASIS2XML](https://sourceforge.net/projects/asis2xml/), and
-releases up to 20190426 can be found there.
+to [ASIS2XML](https://sourceforge.net/projects/asis2xml/), also on
+SourceForge, and releases up to 20190426 can be found there.
 
 ## Copyright ##
 
