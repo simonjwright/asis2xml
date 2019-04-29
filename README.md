@@ -148,9 +148,10 @@ Ada.Characters.Handling;` becomes
       </selected_component>
     </with_clause>
 
-Processing the XML with the supplied XSLT script `selected_names.xsl`,
+Processing the XML with the supplied XSLT script
+`selected_components.xsl`,
 
-    $ xsltproc selected_names.xsl your.xml >your.xmlt
+    $ xsltproc selected_components.xsl your.xml >your.xmlt
 
 gives, after tidying,
 
