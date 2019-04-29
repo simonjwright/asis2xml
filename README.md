@@ -7,21 +7,25 @@ This program converts a unit's ASIS representation into XML, so as to
 make it easier to develop reporting and transformational tools using
 (for example) XSLT.
 
-<p>There is no XML Schema as yet. The output's structure is quite
-close to that of ASIS, at least in overall terms; for example,
-an `A_Defining_Name` element in ASIS is represented as a
-`&lt;defining_name/&gt;` element in XML. In turn, ASIS's structure is
-that of the Ada RM.
+Not every ASIS feature is supported, and in particular
 
-<p>One difference is that, for the kinds of element that have
-visible/private parts (normal and generic packages, tasks and
-protected types) the visible and private parts are enclosed in
-`&lt;visible_part/&gt;` and `&lt;private_part/&gt;` elements
-respectively.
+  * What you get corresponds to a straightforward navigation through
+    the tree, there's no cross-linking.
+  * There's no attempt to relate the structure to the source text.
+  * Comments aren't preserved.
+
+There is no XML Schema as yet. The output's structure is quite close
+to that of ASIS, at least in overall terms; for example, an
+`A_Defining_Name` element in ASIS is represented as a
+`&lt;defining_name/&gt;` element in XML. This is hardly surprising
+since the default strategy, faced with an ASIS Element, is to
+translate it to an XML element with the indicated substitution!
+
+In turn, ASIS's structure is largely that of the Ada RM.
 
 ## Example ##
 
-<p>The source unit `demo.adb`,
+The source unit `demo.adb`,
 
     procedure Demo (X : in out Integer) is
     begin
@@ -110,3 +114,56 @@ use [HTML Tidy](http://www.html-tidy.org):
     $ asis2xml .build/example.adt | tidy -xml -i -utf8 >example.tidy.xml
 
 or variations.
+
+## Differences from GNAT ASIS structure ##
+
+If you want to perform analysis on the generated XML, the best way
+(absent a schema) is to write sample code and see what _asis2xml_
+makes of it. That said,
+
+  * Extensive use is made of attributes (for example, `mode="inout"`
+    above).
+
+  * For the kinds of element that have visible/private parts (normal
+    and generic packages, tasks and protected types) the visible and
+    private parts are enclosed in `&lt;visible_part/&gt;` and
+    `&lt;private_part/&gt;` elements respectively.
+
+  * Pragmas are represented more naturally.
+
+## Workrounds ##
+
+### Compound identifiers ###
+
+Compound identifiers are hard to deal with: `with
+Ada.Characters.Handling;` becomes
+
+    <with_clause>
+      <selected_component>
+        <selected_component>
+          <identifier>Ada</identifier>
+          <identifier>Characters</identifier>
+        </selected_component>
+        <identifier>Handling</identifier>
+      </selected_component>
+    </with_clause>
+
+Processing the XML with the supplied XSLT script `selected_names.xsl`,
+
+    $ xsltproc selected_names.xsl your.xml >your.xmlt
+
+gives, after tidying,
+
+    <with_clause>
+      <expanded_name>Ada.Characters.Handling
+      <selected_component>
+        <selected_component>
+          <identifier>Ada</identifier>
+          <identifier>Characters</identifier>
+        </selected_component>
+        <identifier>Handling</identifier>
+      </selected_component></expanded_name>
+    </with_clause>
+
+This is similar to the GNAT ASIS `defining_expanded_name`, used for
+compound program unit names.

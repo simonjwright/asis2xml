@@ -243,7 +243,8 @@ package body XML_Support is
 
    begin
 
-      --  Put_Line ("Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
+      --  Put_Line (Standard_Error,
+      --            "Pre (" & Asis.Elements.Element_Kind (Element)'Img & ")");
 
       case Asis.Elements.Element_Kind (Element) is
 
@@ -636,11 +637,6 @@ package body XML_Support is
                  DOM.Core.Documents.Create_Element
                    (State.Document, "exception_handler"));
 
-            --  --  --|A2012 start
-            --  when An_Expression_Path =>        -- Asis.Expressions
-            --     null;
-            --  --  --|A2012 end
-
          when Not_An_Element =>
             null;
 
@@ -722,7 +718,8 @@ package body XML_Support is
       pragma Unreferenced (Element);
       pragma Unreferenced (Control);
    begin
-      --  Put_Line ("Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
+      --  Put_Line (Standard_Error,
+      --            "Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
    end Post;
 
