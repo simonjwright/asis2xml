@@ -19,6 +19,7 @@
 --  Copyright (c) 1995-1999, Free Software Foundation, Inc.
 
 with Ada.Characters.Handling;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 pragma Warnings (Off, Ada.Text_IO);
 
@@ -66,6 +67,23 @@ package body XML_Support is
      (State_Information => Info,
       Pre_Operation     => Pre,
       Post_Operation    => Post);
+
+   --  Tree traversal for expanded_name processing. On first
+   --  encountering a Selected_Name, this iterator is invoked to
+   --  concatenate (with periods) the name-like components of the
+   --  Selected_Name and its children.
+   procedure Pre_For_Expanded_Name (Element : in     Asis.Element;
+                                    Control : in out Asis.Traverse_Control;
+                                    State   : in out Unbounded_String);
+   procedure Post_For_Expanded_Name (Element : in     Asis.Element;
+                                     Control : in out Asis.Traverse_Control;
+                                     State   : in out Unbounded_String)
+     is null;
+   procedure Traverse_Tree_For_Expanded_Name
+     is new Asis.Iterator.Traverse_Element
+       (State_Information => Unbounded_String,
+        Pre_Operation     => Pre_For_Expanded_Name,
+        Post_Operation    => Post_For_Expanded_Name);
 
 
    ---------------------------------------
@@ -520,62 +538,105 @@ package body XML_Support is
             end case;
 
          when An_Expression =>             -- Asis.Expressions
-            State.Current :=
-              DOM.Core.Nodes.Append_Child
-                (State.Current,
-                 DOM.Core.Documents.Create_Element
-                   (State.Document,
-                    To_Tag_Name
-                      (Expression_Kinds'Image
-                         (Asis.Elements.Expression_Kind (Element)))));
-            case Asis.Elements.Expression_Kind (Element) is
-               when An_Attribute_Reference =>
-                  declare
-                     Kind : constant String :=
+
+            --  Special handing for <expanded_name/>.
+            if Asis.Elements.Expression_Kind (Element) = A_Selected_Component
+              and then not State.Processing_Expanded_Name
+            then
+               --  Avoid unbounded recursion.
+               State.Processing_Expanded_Name := True;
+               declare
+                  Current : constant DOM.Core.Node := State.Current;
+                  Local_Control : Asis.Traverse_Control := Asis.Continue;
+                  Expanded_Name : Unbounded_String;
+               begin
+                  --  First, stop current interation delving into children.
+                  Control       := Asis.Abandon_Children;
+                  --  Add an <expanded_name/> element.
+                  State.Current := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Element
+                       (State.Document, "expanded_name"));
+                  --  Build the expanded name.
+                  Traverse_Tree_For_Expanded_Name (Element => Element,
+                                                   Control => Local_Control,
+                                                   State   => Expanded_Name);
+                  --  Add the expanded name as a text child of the
+                  --  <expanded_name/> element.
+                  Tmp := DOM.Core.Nodes.Append_Child
+                    (State.Current,
+                     DOM.Core.Documents.Create_Text_Node
+                       (State.Document,
+                        To_String (Expanded_Name)));
+                  --  Process the children, output under the
+                  --  <expanded_name/> element.
+                  Traverse_Tree_For_XML (Element => Element,
+                                         Control => Local_Control,
+                                         State   => State);
+                  State.Current := Current;
+               end;
+               State.Processing_Expanded_Name := False;
+
+            --  Normal processing, possibly as the internal contents
+            --  of an <expanded_name/>.
+            else
+               State.Current :=
+                 DOM.Core.Nodes.Append_Child
+                   (State.Current,
+                    DOM.Core.Documents.Create_Element
+                      (State.Document,
                        To_Tag_Name
-                         (Attribute_Kinds'Image
-                            (Asis.Elements.Attribute_Kind (Element)));
-                     Last : constant Integer
-                       := Kind'Last - String'("_attribute")'Length;
-                  begin
-                     DOM.Core.Elements.Set_Attribute
-                       (State.Current,
-                        "kind",
-                        Kind (Kind'First .. Last));
-                  end;
-               when An_Identifier |
-                 An_Operator_Symbol |
-                 A_Character_Literal |
-                 An_Enumeration_Literal =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                      (State.Current,
-                       DOM.Core.Documents.Create_Text_Node
-                         (State.Document,
-                          +Asis.Expressions.Name_Image (Element)));
-               when An_Integer_Literal |
-                 A_Real_Literal |
-                 A_String_Literal =>
-                  Tmp :=
-                    DOM.Core.Nodes.Append_Child
-                      (State.Current,
-                       DOM.Core.Documents.Create_Text_Node
-                         (State.Document,
-                          +Asis.Expressions.Value_Image (Element)));
-               when A_Function_Call =>
-                  if Asis.Expressions.Is_Prefix_Call (Element) then
-                     DOM.Core.Elements.Set_Attribute
-                       (State.Current,
-                        "prefixed",
-                        "true");
-                  else
-                     DOM.Core.Elements.Set_Attribute
-                       (State.Current,
-                        "prefixed",
-                        "false");
-                  end if;
-               when others => null;
-            end case;
+                         (Expression_Kinds'Image
+                            (Asis.Elements.Expression_Kind (Element)))));
+               case Asis.Elements.Expression_Kind (Element) is
+                  when An_Attribute_Reference =>
+                     declare
+                        Kind : constant String :=
+                          To_Tag_Name
+                            (Attribute_Kinds'Image
+                               (Asis.Elements.Attribute_Kind (Element)));
+                        Last : constant Integer
+                          := Kind'Last - String'("_attribute")'Length;
+                     begin
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current,
+                           "kind",
+                           Kind (Kind'First .. Last));
+                     end;
+                  when An_Identifier |
+                    An_Operator_Symbol |
+                    A_Character_Literal |
+                    An_Enumeration_Literal =>
+                     Tmp :=
+                       DOM.Core.Nodes.Append_Child
+                         (State.Current,
+                          DOM.Core.Documents.Create_Text_Node
+                            (State.Document,
+                             +Asis.Expressions.Name_Image (Element)));
+                  when An_Integer_Literal |
+                    A_Real_Literal |
+                    A_String_Literal =>
+                     Tmp :=
+                       DOM.Core.Nodes.Append_Child
+                         (State.Current,
+                          DOM.Core.Documents.Create_Text_Node
+                            (State.Document,
+                             +Asis.Expressions.Value_Image (Element)));
+                  when A_Function_Call =>
+                     if Asis.Expressions.Is_Prefix_Call (Element) then
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current,
+                           "prefixed",
+                           "true");
+                     else
+                        DOM.Core.Elements.Set_Attribute
+                          (State.Current,
+                           "prefixed",
+                           "false");
+                     end if;
+                  when others => null;
+               end case;
+            end if;
 
          when An_Association =>            -- Asis.Expressions
             State.Current :=
@@ -722,6 +783,26 @@ package body XML_Support is
       --            "Post (" & Asis.Elements.Element_Kind (Element)'Img & ")");
       State.Current := DOM.Core.Nodes.Parent_Node (State.Current);
    end Post;
+
+
+   procedure Pre_For_Expanded_Name (Element : in     Asis.Element;
+                                    Control : in out Asis.Traverse_Control;
+                                    State   : in out Unbounded_String)
+   is
+      pragma Unreferenced (Control);
+   begin
+      case Asis.Elements.Expression_Kind (Element) is
+         when Asis.An_Identifier |
+           Asis.An_Operator_Symbol |
+           Asis.A_Character_Literal =>
+            if State /= Null_Unbounded_String then
+               Append (State, ".");
+            end if;
+            Append (State, +Asis.Expressions.Name_Image (Element));
+         when others =>
+            null;
+      end case;
+   end Pre_For_Expanded_Name;
 
 
    function To_Tag_Name (Image : String) return String is
